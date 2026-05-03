@@ -1,0 +1,12 @@
+{
+  "app": {
+    "name": "mcp-server",
+    "environment": "development"
+  },
+  "logging": {
+    "level": "info"
+  },
+  "worker": {
+    "enabled": false
+  }
+}
