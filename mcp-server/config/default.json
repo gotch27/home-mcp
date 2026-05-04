@@ -6,6 +6,45 @@
   "logging": {
     "level": "info"
   },
+  "database": {
+    "url": "",
+    "ssl": true,
+    "maxConnections": 3
+  },
+  "family": {
+    "members": [
+      {
+        "name": "Gorazd",
+        "email": "gorazdfilipovski@gmail.com"
+      }
+    ]
+  },
+  "notifications": {
+    "from": {
+      "name": "Home MCP",
+      "email": "home@example.com"
+    }
+  },
+  "email": {
+    "smtp": {
+      "host": "smtp-relay.brevo.com",
+      "port": 587,
+      "secure": false,
+      "user": "",
+      "pass": ""
+    }
+  },
+  "queue": {
+    "workerUrl": "",
+    "qstash": {
+      "token": "",
+      "retries": 3,
+      "verifySignatures": true,
+      "currentSigningKey": "",
+      "nextSigningKey": "",
+      "clockTolerance": 30
+    }
+  },
   "worker": {
     "enabled": false
   }

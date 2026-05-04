@@ -1,3 +1,7 @@
+import { emailService } from "@/nextsignal/services/email";
+import { shoppingService } from "@/nextsignal/services/shopping";
+import { todosService } from "@/nextsignal/services/todos";
+
 export type HealthSnapshot = {
   status: "ok";
   appName: string;
@@ -18,7 +22,10 @@ export const services = {
         checkedAt: new Date().toISOString()
       };
     }
-  }
+  },
+  shopping: shoppingService,
+  todos: todosService,
+  email: emailService
 };
 
 export type AppServices = typeof services;
