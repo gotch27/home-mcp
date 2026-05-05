@@ -56,6 +56,29 @@ async function ensureHomeSchema(sql: postgres.Sql) {
     CREATE INDEX IF NOT EXISTS home_todos_open_assignee_idx
     ON home_todos (assignee, completed_at, created_at)
   `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS nextsignal_logs (
+      id text PRIMARY KEY,
+      level text NOT NULL,
+      message text NOT NULL,
+      process text,
+      correlation_id text,
+      data jsonb,
+      error jsonb,
+      created_at timestamptz NOT NULL DEFAULT now()
+    )
+  `;
+
+  await sql`
+    CREATE INDEX IF NOT EXISTS nextsignal_logs_created_at_idx
+    ON nextsignal_logs (created_at DESC)
+  `;
+
+  await sql`
+    CREATE INDEX IF NOT EXISTS nextsignal_logs_correlation_id_idx
+    ON nextsignal_logs (correlation_id)
+  `;
 }
 
 function ignoreExpectedSchemaNotice(notice: postgres.Notice) {

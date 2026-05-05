@@ -1,25 +1,57 @@
 import type { LoggerAdapter } from "@gotch/nextsignal";
+import type { LogEntry } from "@gotch/nextsignal";
+import { getSql } from "@/nextsignal/services/database";
 
-// Starter logger: enough for local development and tests.
-//
-// Replace this with your real logging sink later:
-// - pino
-// - OpenTelemetry
-// - Datadog
-// - structured JSON logs
-//
-// The process code should not care where logs go.
 export const loggerAdapter: LoggerAdapter = {
-  debug(entry) {
-    console.debug(entry.message, entry);
+  async debug(entry) {
+    await writeLog("debug", entry);
   },
-  info(entry) {
-    console.info(entry.message, entry);
+  async info(entry) {
+    await writeLog("info", entry);
   },
-  warn(entry) {
-    console.warn(entry.message, entry);
+  async warn(entry) {
+    await writeLog("warn", entry);
   },
-  error(entry) {
-    console.error(entry.message, entry);
+  async error(entry) {
+    await writeLog("error", entry);
   }
 };
+
+type LogLevel = "debug" | "info" | "warn" | "error";
+
+async function writeLog(level: LogLevel, entry: LogEntry) {
+  try {
+    const sql = await getSql();
+    await sql`
+      INSERT INTO nextsignal_logs (id, level, message, process, correlation_id, data, error)
+      VALUES (
+        ${crypto.randomUUID()},
+        ${level},
+        ${entry.message},
+        ${entry.process ?? null},
+        ${entry.correlationId ?? null},
+        ${toJson(entry.data)},
+        ${toJson(serializeError(entry.error))}
+      )
+    `;
+  } catch {
+    // Logging must not break application work.
+  }
+}
+
+function toJson(value: unknown) {
+  return value === undefined ? null : JSON.stringify(value);
+}
+
+function serializeError(error: unknown): unknown {
+  if (!error) return undefined;
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    };
+  }
+
+  return error;
+}
