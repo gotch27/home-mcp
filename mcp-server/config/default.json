@@ -1,15 +1,16 @@
 {
   "app": {
-    "name": "mcp-server",
+    "name": "home-mcp-server",
     "environment": "development"
   },
   "logging": {
-    "level": "info"
+    "level": "info",
+    "retentiondays": 3
   },
   "database": {
     "url": "",
     "ssl": true,
-    "maxConnections": 3
+    "maxconnections": 3
   },
   "family": {
     "members": [
@@ -21,8 +22,8 @@
   },
   "notifications": {
     "from": {
-      "name": "Home MCP",
-      "email": "home@example.com"
+      "name": "",
+      "email": ""
     }
   },
   "email": {
@@ -35,15 +36,18 @@
     }
   },
   "queue": {
-    "workerUrl": "",
+    "workerurl": "",
     "qstash": {
       "token": "",
       "retries": 3,
       "verifySignatures": true,
-      "currentSigningKey": "",
-      "nextSigningKey": "",
-      "clockTolerance": 30
+      "currentsigningkey": "",
+      "nextsigningkey": "",
+      "clocktolerance": 30
     }
+  },
+  "maintenance": {
+    "cronsecret": ""
   },
   "worker": {
     "enabled": false

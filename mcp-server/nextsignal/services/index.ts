@@ -1,4 +1,5 @@
 import { emailService } from "@/nextsignal/services/email";
+import { logsService } from "@/nextsignal/services/logs";
 import { shoppingService } from "@/nextsignal/services/shopping";
 import { todosService } from "@/nextsignal/services/todos";
 
@@ -25,7 +26,8 @@ export const services = {
   },
   shopping: shoppingService,
   todos: todosService,
-  email: emailService
+  email: emailService,
+  logs: logsService
 };
 
 export type AppServices = typeof services;
