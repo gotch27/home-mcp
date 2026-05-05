@@ -1,6 +1,7 @@
 import type { LoggerAdapter } from "@gotch/nextsignal";
 import type { LogEntry } from "@gotch/nextsignal";
-import { getSql } from "@/nextsignal/services/database";
+import { nextsignalLogs } from "@/nextsignal/db/schema";
+import { getDb } from "@/nextsignal/services/database";
 
 export const loggerAdapter: LoggerAdapter = {
   async debug(entry) {
@@ -21,26 +22,19 @@ type LogLevel = "debug" | "info" | "warn" | "error";
 
 async function writeLog(level: LogLevel, entry: LogEntry) {
   try {
-    const sql = await getSql();
-    await sql`
-      INSERT INTO nextsignal_logs (id, level, message, process, correlation_id, data, error)
-      VALUES (
-        ${crypto.randomUUID()},
-        ${level},
-        ${entry.message},
-        ${entry.process ?? null},
-        ${entry.correlationId ?? null},
-        ${toJson(entry.data)},
-        ${toJson(serializeError(entry.error))}
-      )
-    `;
+    const db = await getDb();
+    await db.insert(nextsignalLogs).values({
+      id: crypto.randomUUID(),
+      level,
+      message: entry.message,
+      process: entry.process ?? null,
+      correlationId: entry.correlationId ?? null,
+      data: entry.data ?? null,
+      error: serializeError(entry.error) ?? null
+    });
   } catch {
     // Logging must not break application work.
   }
-}
-
-function toJson(value: unknown) {
-  return value === undefined ? null : JSON.stringify(value);
 }
 
 function serializeError(error: unknown): unknown {

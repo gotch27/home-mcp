@@ -1,8 +1,10 @@
+import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { config } from "@/nextsignal/config";
+import * as schema from "@/nextsignal/db/schema";
 
 let sqlClient: postgres.Sql | undefined;
-let schemaReady: Promise<void> | undefined;
+let dbClient: PostgresJsDatabase<typeof schema> | undefined;
 
 export async function getSql() {
   await config.load();
@@ -20,65 +22,12 @@ export async function getSql() {
     });
   }
 
-  schemaReady ??= ensureHomeSchema(sqlClient);
-  await schemaReady;
-
   return sqlClient;
 }
 
-async function ensureHomeSchema(sql: postgres.Sql) {
-  await sql`
-    CREATE TABLE IF NOT EXISTS home_shopping_items (
-      id text PRIMARY KEY,
-      name text NOT NULL,
-      quantity text NOT NULL,
-      store text,
-      created_at timestamptz NOT NULL DEFAULT now()
-    )
-  `;
-
-  await sql`
-    CREATE INDEX IF NOT EXISTS home_shopping_items_created_at_idx
-    ON home_shopping_items (created_at)
-  `;
-
-  await sql`
-    CREATE TABLE IF NOT EXISTS home_todos (
-      id text PRIMARY KEY,
-      title text NOT NULL,
-      assignee text NOT NULL,
-      completed_at timestamptz,
-      created_at timestamptz NOT NULL DEFAULT now()
-    )
-  `;
-
-  await sql`
-    CREATE INDEX IF NOT EXISTS home_todos_open_assignee_idx
-    ON home_todos (assignee, completed_at, created_at)
-  `;
-
-  await sql`
-    CREATE TABLE IF NOT EXISTS nextsignal_logs (
-      id text PRIMARY KEY,
-      level text NOT NULL,
-      message text NOT NULL,
-      process text,
-      correlation_id text,
-      data jsonb,
-      error jsonb,
-      created_at timestamptz NOT NULL DEFAULT now()
-    )
-  `;
-
-  await sql`
-    CREATE INDEX IF NOT EXISTS nextsignal_logs_created_at_idx
-    ON nextsignal_logs (created_at DESC)
-  `;
-
-  await sql`
-    CREATE INDEX IF NOT EXISTS nextsignal_logs_correlation_id_idx
-    ON nextsignal_logs (correlation_id)
-  `;
+export async function getDb() {
+  dbClient ??= drizzle(await getSql(), { schema });
+  return dbClient;
 }
 
 function ignoreExpectedSchemaNotice(notice: postgres.Notice) {
