@@ -1,6 +1,6 @@
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { config } from "@/nextsignal/config";
+import { CONFIG_ENV_PREFIX, config } from "@/nextsignal/config";
 import * as schema from "@/nextsignal/db/schema";
 
 let sqlClient: postgres.Sql | undefined;
@@ -10,9 +10,9 @@ export async function getSql() {
   await config.load();
 
   if (!sqlClient) {
-    const url = readString("database.url") ?? process.env.DATABASE_URL;
+    const url = readString("database.url");
     if (!url) {
-      throw new Error("Missing database URL. Set config `database.url`, NEXTSIGNAL_DATABASE__URL, or DATABASE_URL.");
+      throw new Error(`Missing database URL. Set config \`database.url\` or ${CONFIG_ENV_PREFIX}DATABASE__URL.`);
     }
 
     sqlClient = postgres(url, {

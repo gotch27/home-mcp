@@ -76,13 +76,11 @@ export const emailService = {
 
 function readSmtpConfig(): SmtpConfig {
   const smtp = config.require<SmtpConfig>("email.smtp");
-  const user = readString("email.smtp.user") ?? process.env.SMTP_USER;
-  const pass = readString("email.smtp.pass") ?? process.env.SMTP_PASS;
 
   return {
     ...smtp,
-    user,
-    pass
+    user: readString("email.smtp.user"),
+    pass: readString("email.smtp.pass")
   };
 }
 

@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "home-mcp-server",
-    "environment": "development"
+    "environment": "local"
   },
   "logging": {
     "level": "info",
