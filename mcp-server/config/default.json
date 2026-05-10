@@ -4,7 +4,6 @@
     "environment": "local"
   },
   "logging": {
-    "level": "info",
     "retentiondays": 3
   },
   "database": {

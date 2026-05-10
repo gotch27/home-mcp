@@ -4,7 +4,7 @@ import { createConfig, envConfigProvider, jsonConfigProvider } from "@gotch/next
 // default first, then overlays environment values prefixed with CONFIG_ENV_PREFIX.
 //
 // Example:
-// NEXTSIGNAL_LOGGING__LEVEL=debug maps to config path `logging.level`.
+// NEXTSIGNAL_DATABASE__URL maps to config path `database.url`.
 export const CONFIG_ENV_PREFIX = "NEXTSIGNAL_";
 
 export const config = createConfig({
