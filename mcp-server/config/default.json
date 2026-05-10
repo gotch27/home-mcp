@@ -37,6 +37,12 @@
   "maintenance": {
     "cronsecret": ""
   },
+  "mcp": {
+    "resourceurl": ""
+  },
+  "workos": {
+    "authkitdomain": ""
+  },
   "worker": {
     "enabled": false
   }

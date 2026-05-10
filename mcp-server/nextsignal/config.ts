@@ -13,3 +13,14 @@ export const config = createConfig({
     envConfigProvider({ prefix: CONFIG_ENV_PREFIX })
   ]
 });
+
+export async function requireConfigString(path: string): Promise<string> {
+  await config.load();
+
+  const value = config.require<string>(path).trim();
+  if (!value) {
+    throw new Error(`Missing required config value: ${path}`);
+  }
+
+  return value;
+}
