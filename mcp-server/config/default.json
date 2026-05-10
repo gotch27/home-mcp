@@ -41,7 +41,11 @@
     "resourceurl": ""
   },
   "workos": {
-    "authkitdomain": ""
+    "authkitdomain": "",
+    "clientid": "",
+    "apikey": "",
+    "cookiepassword": "",
+    "redirecturi": ""
   },
   "worker": {
     "enabled": false

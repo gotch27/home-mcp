@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "NextSignal Starter",
-  description: "A small Next.js app wired with NextSignal."
+  title: "Home MCP Server",
+  description: "A private MCP server for shared home spaces, shopping lists, and todos."
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

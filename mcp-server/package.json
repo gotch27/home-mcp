@@ -16,6 +16,7 @@
   "dependencies": {
     "@gotch/nextsignal": "alpha",
     "@modelcontextprotocol/sdk": "^1.26.0",
+    "@workos-inc/node": "^9.2.0",
     "drizzle-orm": "^0.45.2",
     "jose": "^6.2.3",
     "mcp-handler": "^1.1.0",

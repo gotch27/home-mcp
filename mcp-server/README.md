@@ -22,6 +22,28 @@ For production on Vercel, set the same `NEXTSIGNAL_` variables in Vercel Project
 
 Use double underscores for nested config paths, for example `NEXTSIGNAL_DATABASE__URL` maps to `database.url`.
 
+### WorkOS AuthKit
+
+The web home page uses WorkOS AuthKit browser sessions. The MCP endpoint uses WorkOS-issued bearer tokens through MCP OAuth resource metadata.
+
+Required local envs:
+
+```bash
+NEXTSIGNAL_MCP__RESOURCEURL=http://localhost:3000/api/mcp
+NEXTSIGNAL_WORKOS__AUTHKITDOMAIN=https://your-subdomain.authkit.app
+
+NEXTSIGNAL_WORKOS__CLIENTID=client_your_client_id
+NEXTSIGNAL_WORKOS__APIKEY=sk_test_your_api_key
+NEXTSIGNAL_WORKOS__COOKIEPASSWORD=generate_at_least_32_characters
+NEXTSIGNAL_WORKOS__REDIRECTURI=http://localhost:3000/callback
+```
+
+For production, use your public HTTPS origin for both `NEXTSIGNAL_MCP__RESOURCEURL` and `NEXTSIGNAL_WORKOS__REDIRECTURI`.
+
+When developing through a tunnel such as ngrok, set `NEXTSIGNAL_WORKOS__REDIRECTURI`
+to the tunnel callback URL, for example `https://your-ngrok-domain.ngrok-free.dev/callback`.
+The app uses this value as the canonical public origin for AuthKit redirects and sign-out.
+
 ## Worker
 
 This starter does not configure a recurring scheduler yet, but the worker entry is present so you know where production background runtime code belongs.
