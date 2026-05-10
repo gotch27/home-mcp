@@ -3,9 +3,9 @@ import { app } from "@/nextsignal/app";
 
 // The worker is a separate Node runtime from Next.js.
 //
-// It can run distributed queue workers and recurring process schedulers through
-// the same host. This starter has no queue/scheduler adapter configured yet,
-// so `pnpm worker` is mostly here as the place to grow from.
+// It can run recurring process schedulers through the same host. This starter
+// has no scheduler adapter configured yet, so `pnpm worker` is mostly here as
+// the place to grow from.
 const host = createBackgroundHost(app);
 
 await host.start();

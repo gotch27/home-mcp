@@ -1,11 +1,7 @@
-import { allowAnonymous, distributedProcess, notFound, ok, validateWith, value } from "@gotch/nextsignal";
-import type { ProcessContext, Result } from "@gotch/nextsignal";
+import { allowAnonymous, businessProcess, notFound, validateWith, value } from "@gotch/nextsignal";
+import type { ProcessContext } from "@gotch/nextsignal";
 import type { AppServices } from "@/nextsignal/services";
-import {
-  homeChangeNotificationSchema,
-  todoCompleteInputSchema,
-  type TodoCompleteInput
-} from "@/nextsignal/schemas";
+import { todoCompleteInputSchema, type TodoCompleteInput } from "@/nextsignal/schemas";
 import type { HomeChangeNotification, TodoItem } from "@/nextsignal/domain/home";
 
 export type TodoCompleteOutput = {
@@ -13,44 +9,17 @@ export type TodoCompleteOutput = {
   todos: TodoItem[];
 };
 
-export const todoComplete = distributedProcess<TodoCompleteInput, TodoCompleteOutput, HomeChangeNotification, AppServices>({
+export const todoComplete = businessProcess<TodoCompleteInput, TodoCompleteOutput, AppServices>({
   name: "todos.complete",
   metadata: {
     description: "Completes todos by id or title and notifies the family.",
-    tags: ["todos", "distributed"],
+    tags: ["todos", "business"],
     owner: "home",
     version: "0.1.0"
   },
-  transient: homeChangeNotificationSchema,
   auth: allowAnonymous(),
   validate: validateWith(todoCompleteInputSchema),
-  handle: todoCompleteHandle,
-  map: todoCompleteMap,
-  async work(ctx, notification) {
-    await ctx.logger.info({
-      message: "Processing todo completion notification.",
-      process: ctx.metadata.processName,
-      correlationId: ctx.metadata.correlationId,
-      data: {
-        action: notification.action,
-        changedBy: notification.changedBy,
-        completedCount: notification.details.length
-      }
-    });
-
-    await ctx.services.email.sendFamilyChangeNotification(notification, ctx.logger);
-
-    await ctx.logger.info({
-      message: "Todo completion notification processed.",
-      process: ctx.metadata.processName,
-      correlationId: ctx.metadata.correlationId,
-      data: {
-        action: notification.action
-      }
-    });
-
-    return ok();
-  }
+  handle: todoCompleteHandle
 });
 
 async function todoCompleteHandle(ctx: ProcessContext<AppServices>, input: TodoCompleteInput) {
@@ -83,6 +52,20 @@ async function todoCompleteHandle(ctx: ProcessContext<AppServices>, input: TodoC
   }
 
   const todos = await ctx.services.todos.list();
+  try {
+    await ctx.services.email.sendFamilyChangeNotification(
+      createTodoCompleteNotification(input, { completedTodos, todos }),
+      ctx.logger
+    );
+  } catch (error) {
+    await ctx.logger.error({
+      message: "Failed to send todo completion notification email.",
+      process: ctx.metadata.processName,
+      correlationId: ctx.metadata.correlationId,
+      error
+    });
+  }
+
   await ctx.logger.info({
     message: "Todos completed.",
     process: ctx.metadata.processName,
@@ -96,22 +79,20 @@ async function todoCompleteHandle(ctx: ProcessContext<AppServices>, input: TodoC
   return value({ completedTodos, todos });
 }
 
-function todoCompleteMap(
-  _ctx: unknown,
+function createTodoCompleteNotification(
   input: TodoCompleteInput,
-  result: Result<TodoCompleteOutput>
+  data: TodoCompleteOutput
 ): HomeChangeNotification {
-  const data = result.data;
-  const count = data?.completedTodos.length ?? 0;
+  const count = data.completedTodos.length;
 
   return {
     domain: "todos",
     action: "complete",
     changedBy: input.changedBy,
     summary: `${input.changedBy ?? "Someone"} completed ${count} todo${count === 1 ? "" : "s"}.`,
-    details: data?.completedTodos.map((todo) => `${todo.title} (${todo.assignee})`) ?? [],
+    details: data.completedTodos.map((todo) => `${todo.title} (${todo.assignee})`),
     snapshot: {
-      todos: data?.todos ?? []
+      todos: data.todos
     },
     changedAt: new Date().toISOString()
   };

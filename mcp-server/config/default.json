@@ -35,17 +35,6 @@
       "pass": ""
     }
   },
-  "queue": {
-    "workerurl": "",
-    "qstash": {
-      "token": "",
-      "retries": 3,
-      "verifySignatures": true,
-      "currentsigningkey": "",
-      "nextsigningkey": "",
-      "clocktolerance": 30
-    }
-  },
   "maintenance": {
     "cronsecret": ""
   },

@@ -3,10 +3,10 @@ import { pruneLogsApi } from "@/nextsignal/processes/api/logs/prune";
 import { shoppingListItemsApi } from "@/nextsignal/processes/api/shopping/list-items";
 import { todoListApi } from "@/nextsignal/processes/api/todos/list";
 import { healthBusiness } from "@/nextsignal/processes/business/health";
-import { shoppingAddItem } from "@/nextsignal/processes/distributed/shopping/add-item";
-import { shoppingClearItems } from "@/nextsignal/processes/distributed/shopping/clear-items";
-import { todoAdd } from "@/nextsignal/processes/distributed/todos/add";
-import { todoComplete } from "@/nextsignal/processes/distributed/todos/complete";
+import { shoppingAddItem } from "@/nextsignal/processes/business/shopping/add-item";
+import { shoppingClearItems } from "@/nextsignal/processes/business/shopping/clear-items";
+import { todoAdd } from "@/nextsignal/processes/business/todos/add";
+import { todoComplete } from "@/nextsignal/processes/business/todos/complete";
 
 // Register every process here. Process names must be unique.
 //
