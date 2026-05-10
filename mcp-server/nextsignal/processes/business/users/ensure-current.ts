@@ -1,4 +1,4 @@
-import { businessProcess, requireUser, validateWith, value } from "@gotch/nextsignal";
+import { businessProcess, forwardFault, requireUser, validateWith, value } from "@gotch/nextsignal";
 import type { HomeUser } from "@/nextsignal/domain/home";
 import { requireHomeUser } from "@/nextsignal/processes/business/context";
 import type { AppServices } from "@/nextsignal/services";
@@ -14,15 +14,16 @@ export const ensureCurrentUser = businessProcess<EnsureCurrentUserInput, HomeUse
   validate: validateWith(ensureCurrentUserInputSchema),
   async handle(ctx) {
     const userResult = await requireHomeUser(ctx);
-    if (userResult.ok !== true) return userResult;
+    if (!userResult.ok) return forwardFault(userResult);
+    const user = userResult.data!;
 
     await ctx.logger.info({
       message: "Ensured current user.",
       process: ctx.metadata.processName,
       correlationId: ctx.metadata.correlationId,
-      data: { userId: userResult.user.id }
+      data: { userId: user.id }
     });
 
-    return value(userResult.user);
+    return value(user);
   }
 });

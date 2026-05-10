@@ -1,4 +1,5 @@
-import { businessProcess, requireUser, validateWith, value } from "@gotch/nextsignal";
+import { businessProcess, forwardFault, requireUser, validateWith, value } from "@gotch/nextsignal";
+import type { ProcessContext } from "@gotch/nextsignal";
 import { requireHomeUser } from "@/nextsignal/processes/business/context";
 import type { AppServices } from "@/nextsignal/services";
 import type { SpaceSummary } from "@/nextsignal/services/spaces";
@@ -12,18 +13,21 @@ export const spacesList = businessProcess<SpacesListInput, SpaceSummary[], AppSe
   },
   auth: requireUser(),
   validate: validateWith(spacesListInputSchema),
-  async handle(ctx) {
-    const userResult = await requireHomeUser(ctx);
-    if (!userResult.ok) return userResult;
-
-    const spaces = await ctx.services.spaces.listForUser(userResult.user.id);
-    await ctx.logger.info({
-      message: "Listed user spaces.",
-      process: ctx.metadata.processName,
-      correlationId: ctx.metadata.correlationId,
-      data: { userId: userResult.user.id, spaceCount: spaces.length }
-    });
-
-    return value(spaces);
-  }
+  handle: spacesListHandle
 });
+
+async function spacesListHandle(ctx: ProcessContext<AppServices>) {
+  const userResult = await requireHomeUser(ctx);
+  if (!userResult.ok) return forwardFault(userResult);
+  const user = userResult.data!;
+
+  const spaces = await ctx.services.spaces.listForUser(user.id);
+  await ctx.logger.info({
+    message: "Listed user spaces.",
+    process: ctx.metadata.processName,
+    correlationId: ctx.metadata.correlationId,
+    data: { userId: user.id, spaceCount: spaces.length }
+  });
+
+  return value(spaces);
+}

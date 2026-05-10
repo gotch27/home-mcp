@@ -23,10 +23,6 @@ export default async function SpacesPage({ searchParams }: SpacesPageProps) {
   const message = readParam(params, "message");
   const displayName = [session.user.firstName, session.user.lastName].filter(Boolean).join(" ") || session.user.email;
 
-  await app.dispatch("users.ensureCurrent", {}, {
-    runtime: "api",
-    request: createWebSessionRequest(session, "nextsignal://web/spaces")
-  });
   const spacesResult = await app.dispatch<SpacesListInput, SpaceSummary[]>("spaces.list", {}, {
     runtime: "api",
     request: createWebSessionRequest(session, "nextsignal://web/spaces")

@@ -1,4 +1,4 @@
-import { businessProcess, notFound, requireUser, validateWith, value } from "@gotch/nextsignal";
+import { businessProcess, forwardFault, notFound, requireUser, validateWith, value } from "@gotch/nextsignal";
 import type { ProcessContext } from "@gotch/nextsignal";
 import { requireActiveHomeSpace } from "@/nextsignal/processes/business/context";
 import type { AppServices } from "@/nextsignal/services";
@@ -25,8 +25,8 @@ export const shoppingClearItems = businessProcess<ShoppingClearItemsInput, Shopp
 
 async function shoppingClearItemsHandle(ctx: ProcessContext<AppServices>, input: ShoppingClearItemsInput) {
   const activeResult = await requireActiveHomeSpace(ctx);
-  if (!activeResult.ok) return activeResult;
-  const { activeSpace } = activeResult;
+  if (!activeResult.ok) return forwardFault(activeResult);
+  const activeSpace = activeResult.data!;
 
   await ctx.logger.info({
     message: "Clearing shopping items.",

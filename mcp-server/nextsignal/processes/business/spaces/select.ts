@@ -1,4 +1,5 @@
-import { businessProcess, forbidden, requireUser, validateWith, value } from "@gotch/nextsignal";
+import { businessProcess, forbidden, forwardFault, requireUser, validateWith, value } from "@gotch/nextsignal";
+import type { ProcessContext } from "@gotch/nextsignal";
 import { requireHomeUser } from "@/nextsignal/processes/business/context";
 import type { AppServices } from "@/nextsignal/services";
 import type { SpaceDetails } from "@/nextsignal/services/spaces";
@@ -12,32 +13,35 @@ export const spacesSelect = businessProcess<SpacesSelectInput, SpaceDetails, App
   },
   auth: requireUser(),
   validate: validateWith(spacesSelectInputSchema),
-  async handle(ctx, input) {
-    const userResult = await requireHomeUser(ctx);
-    if (!userResult.ok) return userResult;
+  handle: spacesSelectHandle
+});
 
-    const space = await ctx.services.spaces.select({
-      userId: userResult.user.id,
-      spaceId: input.spaceId
-    });
+async function spacesSelectHandle(ctx: ProcessContext<AppServices>, input: SpacesSelectInput) {
+  const userResult = await requireHomeUser(ctx);
+  if (!userResult.ok) return forwardFault(userResult);
+  const user = userResult.data!;
 
-    if (!space) {
-      await ctx.logger.warn({
-        message: "User attempted to select a space they are not a member of.",
-        process: ctx.metadata.processName,
-        correlationId: ctx.metadata.correlationId,
-        data: { userId: userResult.user.id, spaceId: input.spaceId }
-      });
-      return forbidden("You are not a member of that home space.");
-    }
+  const space = await ctx.services.spaces.select({
+    userId: user.id,
+    spaceId: input.spaceId
+  });
 
-    await ctx.logger.info({
-      message: "Selected active home space.",
+  if (!space) {
+    await ctx.logger.warn({
+      message: "User attempted to select a space they are not a member of.",
       process: ctx.metadata.processName,
       correlationId: ctx.metadata.correlationId,
-      data: { userId: userResult.user.id, spaceId: space.id }
+      data: { userId: user.id, spaceId: input.spaceId }
     });
-
-    return value(space);
+    return forbidden("You are not a member of that home space.");
   }
-});
+
+  await ctx.logger.info({
+    message: "Selected active home space.",
+    process: ctx.metadata.processName,
+    correlationId: ctx.metadata.correlationId,
+    data: { userId: user.id, spaceId: space.id }
+  });
+
+  return value(space);
+}
