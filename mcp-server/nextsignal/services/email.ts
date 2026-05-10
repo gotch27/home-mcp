@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import type { LoggerAdapter } from "@gotch/nextsignal";
 import { config } from "@/nextsignal/config";
-import type { FamilyMember, HomeChangeNotification } from "@/nextsignal/domain/home";
+import type { HomeChangeNotification } from "@/nextsignal/domain/home";
 
 type SmtpConfig = {
   host: string;
@@ -16,26 +16,44 @@ type SenderConfig = {
   email: string;
 };
 
+export type NotificationRecipient = {
+  email: string;
+  displayName: string;
+};
+
 export const emailService = {
-  async sendFamilyChangeNotification(notification: HomeChangeNotification, logger?: LoggerAdapter): Promise<void> {
+  async sendSpaceChangeNotification(
+    notification: HomeChangeNotification,
+    recipients: NotificationRecipient[],
+    logger?: LoggerAdapter
+  ): Promise<void> {
     await config.load();
 
-    const members = readFamilyMembers();
-    const recipients = members.map((member) => member.email).filter(Boolean);
-    if (recipients.length === 0) {
-      throw new Error("Missing family email recipients in config `family.members`.");
+    const recipientEmails = recipients.map((member) => member.email).filter(Boolean);
+    if (recipientEmails.length === 0) {
+      await logger?.info({
+        message: "Skipping space change notification email because there are no recipients.",
+        data: {
+          domain: notification.domain,
+          action: notification.action,
+          spaceName: notification.spaceName,
+          changedBy: notification.changedBy
+        }
+      });
+      return;
     }
 
     const smtp = readSmtpConfig();
     const from = config.require<SenderConfig>("notifications.from");
     await logger?.info({
-      message: "Sending family change notification email.",
+      message: "Sending space change notification email.",
       data: {
         domain: notification.domain,
         action: notification.action,
+        spaceName: notification.spaceName,
         changedBy: notification.changedBy,
-        recipientCount: recipients.length,
-        recipients,
+        recipientCount: recipientEmails.length,
+        recipients: recipientEmails,
         from: from.email,
         smtpHost: smtp.host,
         smtpPort: Number(smtp.port)
@@ -51,19 +69,20 @@ export const emailService = {
 
     const info = await transporter.sendMail({
       from: `"${from.name}" <${from.email}>`,
-      to: recipients,
-      subject: `[Home] ${notification.domain === "shopping" ? "Shopping list" : "Todo list"} updated`,
+      to: recipientEmails,
+      subject: `[${notification.spaceName}] ${notification.domain === "shopping" ? "Shopping list" : "Todo list"} updated`,
       text: renderTextNotification(notification),
       html: renderHtmlNotification(notification)
     });
 
     await logger?.info({
-      message: "Family change notification email sent.",
+      message: "Space change notification email sent.",
       data: {
         domain: notification.domain,
         action: notification.action,
-        recipientCount: recipients.length,
-        recipients,
+        spaceName: notification.spaceName,
+        recipientCount: recipientEmails.length,
+        recipients: recipientEmails,
         from: from.email,
         messageId: info.messageId,
         accepted: info.accepted,
@@ -84,15 +103,11 @@ function readSmtpConfig(): SmtpConfig {
   };
 }
 
-function readFamilyMembers(): FamilyMember[] {
-  const members = config.require<FamilyMember[]>("family.members");
-  if (Array.isArray(members)) return members;
-
-  throw new Error("Invalid config `family.members`. Provide an array in config/default.json.");
-}
-
 function renderTextNotification(notification: HomeChangeNotification) {
   const lines = [
+    `Space: ${notification.spaceName}`,
+    `Changed by: ${notification.changedBy}`,
+    "",
     notification.summary,
     "",
     ...notification.details.map((detail) => `- ${detail}`),
@@ -127,6 +142,7 @@ function renderHtmlNotification(notification: HomeChangeNotification) {
     .join("");
 
   return [
+    `<p><strong>Space:</strong> ${escapeHtml(notification.spaceName)}<br><strong>Changed by:</strong> ${escapeHtml(notification.changedBy)}</p>`,
     `<p>${escapeHtml(notification.summary)}</p>`,
     detailItems ? `<ul>${detailItems}</ul>` : "",
     `<p><strong>${notification.domain === "shopping" ? "Current shopping list" : "Open todos"}:</strong></p>`,

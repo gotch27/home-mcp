@@ -4,16 +4,19 @@ import { getDb } from "@/nextsignal/services/database";
 import type { ShoppingItem } from "@/nextsignal/domain/home";
 
 export type ListShoppingItemsInput = {
+  spaceId: string;
   store?: string;
 };
 
 export type AddShoppingItemInput = {
+  spaceId: string;
   name: string;
   quantity?: string;
   store?: string;
 };
 
 export type ClearShoppingItemsInput = {
+  spaceId: string;
   all?: boolean;
   ids?: string[];
   names?: string[];
@@ -21,13 +24,16 @@ export type ClearShoppingItemsInput = {
 };
 
 export const shoppingService = {
-  async listItems(input: ListShoppingItemsInput = {}): Promise<ShoppingItem[]> {
+  async listItems(input: ListShoppingItemsInput): Promise<ShoppingItem[]> {
     const db = await getDb();
     const store = normalizeOptionalText(input.store)?.toLowerCase();
     const rows = await db
       .select()
       .from(homeShoppingItems)
-      .where(store ? sql`lower(coalesce(${homeShoppingItems.store}, '')) = ${store}` : undefined)
+      .where(and(
+        eq(homeShoppingItems.spaceId, input.spaceId),
+        store ? sql`lower(coalesce(${homeShoppingItems.store}, '')) = ${store}` : undefined
+      ))
       .orderBy(asc(homeShoppingItems.createdAt));
 
     return rows.map(mapShoppingItem);
@@ -41,7 +47,7 @@ export const shoppingService = {
     const store = normalizeOptionalText(input.store) ?? null;
     const [row] = await db
       .insert(homeShoppingItems)
-      .values({ id, name, quantity, store })
+      .values({ id, spaceId: input.spaceId, name, quantity, store })
       .returning();
 
     return mapShoppingItem(row);
@@ -60,7 +66,7 @@ export const shoppingService = {
     const storeCondition = store ? sql`lower(coalesce(${homeShoppingItems.store}, '')) = ${store}` : undefined;
     const rows = await db
       .delete(homeShoppingItems)
-      .where(and(itemCondition, storeCondition))
+      .where(and(eq(homeShoppingItems.spaceId, input.spaceId), itemCondition, storeCondition))
       .returning();
 
     return rows.map(mapShoppingItem);
@@ -70,6 +76,7 @@ export const shoppingService = {
 function mapShoppingItem(row: typeof homeShoppingItems.$inferSelect): ShoppingItem {
   return {
     id: row.id,
+    spaceId: row.spaceId,
     name: row.name,
     quantity: row.quantity,
     store: row.store,

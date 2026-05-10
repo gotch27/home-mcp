@@ -1,8 +1,9 @@
-import { allowAnonymous, businessProcess, notFound, validateWith, value } from "@gotch/nextsignal";
+import { businessProcess, notFound, requireUser, validateWith, value } from "@gotch/nextsignal";
 import type { ProcessContext } from "@gotch/nextsignal";
+import { requireActiveHomeSpace } from "@/nextsignal/processes/business/context";
 import type { AppServices } from "@/nextsignal/services";
 import { todoCompleteInputSchema, type TodoCompleteInput } from "@/nextsignal/schemas";
-import type { HomeChangeNotification, TodoItem } from "@/nextsignal/domain/home";
+import type { ActiveHomeSpace, HomeChangeNotification, TodoItem } from "@/nextsignal/domain/home";
 
 export type TodoCompleteOutput = {
   completedTodos: TodoItem[];
@@ -12,17 +13,21 @@ export type TodoCompleteOutput = {
 export const todoComplete = businessProcess<TodoCompleteInput, TodoCompleteOutput, AppServices>({
   name: "todos.complete",
   metadata: {
-    description: "Completes todos by id or title and notifies the family.",
+    description: "Completes todos by id or title and notifies the active home space.",
     tags: ["todos", "business"],
     owner: "home",
     version: "0.1.0"
   },
-  auth: allowAnonymous(),
+  auth: requireUser(),
   validate: validateWith(todoCompleteInputSchema),
   handle: todoCompleteHandle
 });
 
 async function todoCompleteHandle(ctx: ProcessContext<AppServices>, input: TodoCompleteInput) {
+  const activeResult = await requireActiveHomeSpace(ctx);
+  if (!activeResult.ok) return activeResult;
+  const { activeSpace } = activeResult;
+
   await ctx.logger.info({
     message: "Completing todos.",
     process: ctx.metadata.processName,
@@ -31,11 +36,12 @@ async function todoCompleteHandle(ctx: ProcessContext<AppServices>, input: TodoC
       byId: Boolean(input.id),
       byTitle: Boolean(input.title),
       assignee: input.assignee,
-      changedBy: input.changedBy
+      spaceId: activeSpace.space.id,
+      userId: activeSpace.user.id
     }
   });
 
-  const completedTodos = await ctx.services.todos.complete(input);
+  const completedTodos = await ctx.services.todos.complete({ ...input, spaceId: activeSpace.space.id });
   if (completedTodos.length === 0) {
     await ctx.logger.warn({
       message: "No open todos matched completion request.",
@@ -44,17 +50,23 @@ async function todoCompleteHandle(ctx: ProcessContext<AppServices>, input: TodoC
       data: {
         byId: Boolean(input.id),
         byTitle: Boolean(input.title),
-        assignee: input.assignee
+        assignee: input.assignee,
+        spaceId: activeSpace.space.id
       }
     });
 
     return notFound("No open todos matched the completion request.");
   }
 
-  const todos = await ctx.services.todos.list();
+  const todos = await ctx.services.todos.list({ spaceId: activeSpace.space.id });
+  const recipients = await ctx.services.spaces.listNotificationMembers({
+    spaceId: activeSpace.space.id,
+    excludeUserId: activeSpace.user.id
+  });
   try {
-    await ctx.services.email.sendFamilyChangeNotification(
-      createTodoCompleteNotification(input, { completedTodos, todos }),
+    await ctx.services.email.sendSpaceChangeNotification(
+      createTodoCompleteNotification(activeSpace, { completedTodos, todos }),
+      recipients,
       ctx.logger
     );
   } catch (error) {
@@ -72,7 +84,8 @@ async function todoCompleteHandle(ctx: ProcessContext<AppServices>, input: TodoC
     correlationId: ctx.metadata.correlationId,
     data: {
       completedCount: completedTodos.length,
-      todoCount: todos.length
+      todoCount: todos.length,
+      spaceId: activeSpace.space.id
     }
   });
 
@@ -80,7 +93,7 @@ async function todoCompleteHandle(ctx: ProcessContext<AppServices>, input: TodoC
 }
 
 function createTodoCompleteNotification(
-  input: TodoCompleteInput,
+  activeSpace: ActiveHomeSpace,
   data: TodoCompleteOutput
 ): HomeChangeNotification {
   const count = data.completedTodos.length;
@@ -88,8 +101,9 @@ function createTodoCompleteNotification(
   return {
     domain: "todos",
     action: "complete",
-    changedBy: input.changedBy,
-    summary: `${input.changedBy ?? "Someone"} completed ${count} todo${count === 1 ? "" : "s"}.`,
+    spaceName: activeSpace.space.name,
+    changedBy: activeSpace.user.displayName,
+    summary: `${activeSpace.user.displayName} completed ${count} todo${count === 1 ? "" : "s"}.`,
     details: data.completedTodos.map((todo) => `${todo.title} (${todo.assignee})`),
     snapshot: {
       todos: data.todos

@@ -4,23 +4,26 @@ import { getDb } from "@/nextsignal/services/database";
 import type { TodoAssignee, TodoItem } from "@/nextsignal/domain/home";
 
 export type ListTodosInput = {
+  spaceId: string;
   assignee?: TodoAssignee;
   includeCompleted?: boolean;
 };
 
 export type AddTodoInput = {
+  spaceId: string;
   title: string;
   assignee: TodoAssignee;
 };
 
 export type CompleteTodoInput = {
+  spaceId: string;
   id?: string;
   title?: string;
   assignee?: TodoAssignee;
 };
 
 export const todosService = {
-  async list(input: ListTodosInput = {}): Promise<TodoItem[]> {
+  async list(input: ListTodosInput): Promise<TodoItem[]> {
     const db = await getDb();
     const assignee = input.assignee;
     const completionCondition = input.includeCompleted === true ? undefined : isNull(homeTodos.completedAt);
@@ -30,7 +33,7 @@ export const todosService = {
     const rows = await db
       .select()
       .from(homeTodos)
-      .where(and(completionCondition, assigneeCondition))
+      .where(and(eq(homeTodos.spaceId, input.spaceId), completionCondition, assigneeCondition))
       .orderBy(sql`${homeTodos.completedAt} ASC NULLS FIRST`, asc(homeTodos.createdAt));
 
     return rows.map(mapTodo);
@@ -42,7 +45,7 @@ export const todosService = {
     const title = input.title.trim();
     const [row] = await db
       .insert(homeTodos)
-      .values({ id, title, assignee: input.assignee })
+      .values({ id, spaceId: input.spaceId, title, assignee: input.assignee.trim() })
       .returning();
 
     return mapTodo(row);
@@ -63,7 +66,7 @@ export const todosService = {
     const rows = await db
       .update(homeTodos)
       .set({ completedAt: new Date() })
-      .where(and(isNull(homeTodos.completedAt), or(...matchConditions), assigneeCondition))
+      .where(and(eq(homeTodos.spaceId, input.spaceId), isNull(homeTodos.completedAt), or(...matchConditions), assigneeCondition))
       .returning();
 
     return rows.map(mapTodo);
@@ -73,6 +76,7 @@ export const todosService = {
 function mapTodo(row: typeof homeTodos.$inferSelect): TodoItem {
   return {
     id: row.id,
+    spaceId: row.spaceId,
     title: row.title,
     assignee: row.assignee,
     completedAt: row.completedAt ? row.completedAt.toISOString() : null,

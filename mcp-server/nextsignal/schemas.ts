@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { FAMILY_MEMBER_NAMES, TODO_ASSIGNEES } from "@/nextsignal/domain/home";
 
 // Put shared schemas here when multiple processes or routes use them.
 // The starter uses Zod, but NextSignal only needs the adapter contract.
@@ -8,8 +7,23 @@ export const healthInputSchema = z.object({}).passthrough();
 
 export type HealthInput = z.infer<typeof healthInputSchema>;
 
-export const familyMemberNameSchema = z.enum(FAMILY_MEMBER_NAMES);
-export const todoAssigneeSchema = z.enum(TODO_ASSIGNEES);
+export const todoAssigneeSchema = z.string().trim().min(1);
+
+export const ensureCurrentUserInputSchema = z.object({}).passthrough();
+
+export const spacesListInputSchema = z.object({}).passthrough();
+
+export const spacesCreateInputSchema = z.object({
+  name: z.string().trim().min(1).max(80)
+});
+
+export const spacesJoinInputSchema = z.object({
+  code: z.string().trim().min(4).max(32)
+});
+
+export const spacesSelectInputSchema = z.object({
+  spaceId: z.string().min(1)
+});
 
 export const shoppingListItemsInputSchema = z.object({
   store: z.string().min(1).optional()
@@ -18,16 +32,14 @@ export const shoppingListItemsInputSchema = z.object({
 export const shoppingAddItemInputSchema = z.object({
   name: z.string().min(1),
   quantity: z.string().min(1).optional(),
-  store: z.string().min(1).optional(),
-  changedBy: familyMemberNameSchema.optional()
+  store: z.string().min(1).optional()
 });
 
 export const shoppingClearItemsInputSchema = z.object({
   all: z.boolean().optional(),
   ids: z.array(z.string().min(1)).optional(),
   names: z.array(z.string().min(1)).optional(),
-  store: z.string().min(1).optional(),
-  changedBy: familyMemberNameSchema.optional()
+  store: z.string().min(1).optional()
 }).refine(
   (input) => input.all === true || (input.ids?.length ?? 0) > 0 || (input.names?.length ?? 0) > 0,
   { message: "Provide `all: true`, at least one id, or at least one name." }
@@ -40,15 +52,13 @@ export const todoListInputSchema = z.object({
 
 export const todoAddInputSchema = z.object({
   title: z.string().min(1),
-  assignee: todoAssigneeSchema,
-  changedBy: familyMemberNameSchema.optional()
+  assignee: todoAssigneeSchema
 });
 
 export const todoCompleteInputSchema = z.object({
   id: z.string().min(1).optional(),
   title: z.string().min(1).optional(),
-  assignee: todoAssigneeSchema.optional(),
-  changedBy: familyMemberNameSchema.optional()
+  assignee: todoAssigneeSchema.optional()
 }).refine(
   (input) => Boolean(input.id || input.title),
   { message: "Provide either `id` or `title`." }
@@ -56,6 +66,7 @@ export const todoCompleteInputSchema = z.object({
 
 const shoppingItemSchema = z.object({
   id: z.string(),
+  spaceId: z.string(),
   name: z.string(),
   quantity: z.string(),
   store: z.string().nullable(),
@@ -64,6 +75,7 @@ const shoppingItemSchema = z.object({
 
 const todoItemSchema = z.object({
   id: z.string(),
+  spaceId: z.string(),
   title: z.string(),
   assignee: todoAssigneeSchema,
   completedAt: z.string().nullable(),
@@ -73,7 +85,8 @@ const todoItemSchema = z.object({
 export const homeChangeNotificationSchema = z.object({
   domain: z.enum(["shopping", "todos"]),
   action: z.string(),
-  changedBy: familyMemberNameSchema.optional(),
+  spaceName: z.string(),
+  changedBy: z.string(),
   summary: z.string(),
   details: z.array(z.string()),
   snapshot: z.object({
@@ -90,3 +103,8 @@ export type TodoListInput = z.infer<typeof todoListInputSchema>;
 export type TodoAddInput = z.infer<typeof todoAddInputSchema>;
 export type TodoCompleteInput = z.infer<typeof todoCompleteInputSchema>;
 export type HomeChangeNotificationInput = z.infer<typeof homeChangeNotificationSchema>;
+export type EnsureCurrentUserInput = z.infer<typeof ensureCurrentUserInputSchema>;
+export type SpacesListInput = z.infer<typeof spacesListInputSchema>;
+export type SpacesCreateInput = z.infer<typeof spacesCreateInputSchema>;
+export type SpacesJoinInput = z.infer<typeof spacesJoinInputSchema>;
+export type SpacesSelectInput = z.infer<typeof spacesSelectInputSchema>;

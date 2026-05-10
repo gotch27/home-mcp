@@ -1,8 +1,9 @@
-import { allowAnonymous, businessProcess, validateWith, value } from "@gotch/nextsignal";
+import { businessProcess, requireUser, validateWith, value } from "@gotch/nextsignal";
 import type { ProcessContext } from "@gotch/nextsignal";
+import { requireActiveHomeSpace } from "@/nextsignal/processes/business/context";
 import type { AppServices } from "@/nextsignal/services";
 import { shoppingAddItemInputSchema, type ShoppingAddItemInput } from "@/nextsignal/schemas";
-import type { HomeChangeNotification, ShoppingItem } from "@/nextsignal/domain/home";
+import type { ActiveHomeSpace, HomeChangeNotification, ShoppingItem } from "@/nextsignal/domain/home";
 
 export type ShoppingAddItemOutput = {
   item: ShoppingItem;
@@ -12,17 +13,21 @@ export type ShoppingAddItemOutput = {
 export const shoppingAddItem = businessProcess<ShoppingAddItemInput, ShoppingAddItemOutput, AppServices>({
   name: "shopping.addItem",
   metadata: {
-    description: "Adds a shopping item and notifies the family.",
+    description: "Adds a shopping item and notifies the active home space.",
     tags: ["shopping", "business"],
     owner: "home",
     version: "0.1.0"
   },
-  auth: allowAnonymous(),
+  auth: requireUser(),
   validate: validateWith(shoppingAddItemInputSchema),
   handle: shoppingAddItemHandle
 });
 
 async function shoppingAddItemHandle(ctx: ProcessContext<AppServices>, input: ShoppingAddItemInput) {
+  const activeResult = await requireActiveHomeSpace(ctx);
+  if (!activeResult.ok) return activeResult;
+  const { activeSpace } = activeResult;
+
   await ctx.logger.info({
     message: "Adding shopping item.",
     process: ctx.metadata.processName,
@@ -31,16 +36,22 @@ async function shoppingAddItemHandle(ctx: ProcessContext<AppServices>, input: Sh
       name: input.name,
       quantity: input.quantity,
       store: input.store,
-      changedBy: input.changedBy
+      spaceId: activeSpace.space.id,
+      userId: activeSpace.user.id
     }
   });
 
-  const item = await ctx.services.shopping.addItem(input);
-  const items = await ctx.services.shopping.listItems();
+  const item = await ctx.services.shopping.addItem({ ...input, spaceId: activeSpace.space.id });
+  const items = await ctx.services.shopping.listItems({ spaceId: activeSpace.space.id });
+  const recipients = await ctx.services.spaces.listNotificationMembers({
+    spaceId: activeSpace.space.id,
+    excludeUserId: activeSpace.user.id
+  });
 
   try {
-    await ctx.services.email.sendFamilyChangeNotification(
-      createShoppingAddNotification(input, { item, items }),
+    await ctx.services.email.sendSpaceChangeNotification(
+      createShoppingAddNotification(activeSpace, { item, items }),
+      recipients,
       ctx.logger
     );
   } catch (error) {
@@ -58,6 +69,7 @@ async function shoppingAddItemHandle(ctx: ProcessContext<AppServices>, input: Sh
     correlationId: ctx.metadata.correlationId,
     data: {
       id: item.id,
+      spaceId: activeSpace.space.id,
       name: item.name,
       store: item.store,
       itemCount: items.length
@@ -68,14 +80,15 @@ async function shoppingAddItemHandle(ctx: ProcessContext<AppServices>, input: Sh
 }
 
 function createShoppingAddNotification(
-  input: ShoppingAddItemInput,
+  activeSpace: ActiveHomeSpace,
   data: ShoppingAddItemOutput
 ): HomeChangeNotification {
   return {
     domain: "shopping",
     action: "add",
-    changedBy: input.changedBy,
-    summary: `${input.changedBy ?? "Someone"} added ${data.item.name} to the shopping list.`,
+    spaceName: activeSpace.space.name,
+    changedBy: activeSpace.user.displayName,
+    summary: `${activeSpace.user.displayName} added ${data.item.name} to the shopping list.`,
     details: [
       `Quantity: ${data.item.quantity}`,
       `Store: ${data.item.store ?? "Any"}`

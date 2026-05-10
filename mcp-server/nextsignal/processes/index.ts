@@ -5,8 +5,13 @@ import { todoListApi } from "@/nextsignal/processes/api/todos/list";
 import { healthBusiness } from "@/nextsignal/processes/business/health";
 import { shoppingAddItem } from "@/nextsignal/processes/business/shopping/add-item";
 import { shoppingClearItems } from "@/nextsignal/processes/business/shopping/clear-items";
+import { spacesCreate } from "@/nextsignal/processes/business/spaces/create";
+import { spacesJoin } from "@/nextsignal/processes/business/spaces/join";
+import { spacesList } from "@/nextsignal/processes/business/spaces/list";
+import { spacesSelect } from "@/nextsignal/processes/business/spaces/select";
 import { todoAdd } from "@/nextsignal/processes/business/todos/add";
 import { todoComplete } from "@/nextsignal/processes/business/todos/complete";
+import { ensureCurrentUser } from "@/nextsignal/processes/business/users/ensure-current";
 
 // Register every process here. Process names must be unique.
 //
@@ -21,6 +26,11 @@ export const processes = [
   shoppingListItemsApi,
   todoListApi,
   healthBusiness,
+  ensureCurrentUser,
+  spacesList,
+  spacesCreate,
+  spacesJoin,
+  spacesSelect,
   shoppingAddItem,
   shoppingClearItems,
   todoAdd,

@@ -11,14 +11,6 @@
     "ssl": true,
     "maxconnections": 3
   },
-  "family": {
-    "members": [
-      {
-        "name": "Gorazd",
-        "email": "gorazdfilipovski@gmail.com"
-      }
-    ]
-  },
   "notifications": {
     "from": {
       "name": "",

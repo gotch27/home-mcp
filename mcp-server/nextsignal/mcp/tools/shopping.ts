@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { FAMILY_MEMBER_NAMES } from "@/nextsignal/domain/home";
+import { dispatchMcpTool } from "@/nextsignal/mcp/tools/context";
 import { toMcpToolResult } from "@/nextsignal/mcp/result";
 import type { NextSignalMcpTool } from "@/nextsignal/mcp/types";
 import type {
@@ -7,8 +7,6 @@ import type {
   ShoppingClearItemsInput,
   ShoppingListItemsInput
 } from "@/nextsignal/schemas";
-
-const changedBySchema = z.enum(FAMILY_MEMBER_NAMES).optional();
 
 export const shoppingTools: NextSignalMcpTool[] = [
   {
@@ -22,7 +20,7 @@ export const shoppingTools: NextSignalMcpTool[] = [
             store: z.string().min(1).optional()
           }
         },
-        async (input) => toMcpToolResult(await app.dispatch<ShoppingListItemsInput>("shopping.listItems", input, { runtime: "api" }))
+        async (input, extra) => toMcpToolResult(await dispatchMcpTool<ShoppingListItemsInput>(app, "shopping.listItems", input, extra))
       );
     }
   },
@@ -32,15 +30,14 @@ export const shoppingTools: NextSignalMcpTool[] = [
         "shopping_add_item",
         {
           title: "Add Shopping Item",
-          description: "Adds an item to the shopping list and emails the family.",
+          description: "Adds an item to the active home space shopping list and emails other space members.",
           inputSchema: {
             name: z.string().min(1),
             quantity: z.string().min(1).optional(),
-            store: z.string().min(1).optional(),
-            changedBy: changedBySchema
+            store: z.string().min(1).optional()
           }
         },
-        async (input) => toMcpToolResult(await app.dispatch<ShoppingAddItemInput>("shopping.addItem", input, { runtime: "api" }))
+        async (input, extra) => toMcpToolResult(await dispatchMcpTool<ShoppingAddItemInput>(app, "shopping.addItem", input, extra))
       );
     }
   },
@@ -50,16 +47,15 @@ export const shoppingTools: NextSignalMcpTool[] = [
         "shopping_clear_items",
         {
           title: "Clear Shopping Items",
-          description: "Clears shopping items by id, name, store, or all, then emails the family.",
+          description: "Clears active home space shopping items by id, name, store, or all, then emails other space members.",
           inputSchema: {
             all: z.boolean().optional(),
             ids: z.array(z.string().min(1)).optional(),
             names: z.array(z.string().min(1)).optional(),
-            store: z.string().min(1).optional(),
-            changedBy: changedBySchema
+            store: z.string().min(1).optional()
           }
         },
-        async (input) => toMcpToolResult(await app.dispatch<ShoppingClearItemsInput>("shopping.clearItems", input, { runtime: "api" }))
+        async (input, extra) => toMcpToolResult(await dispatchMcpTool<ShoppingClearItemsInput>(app, "shopping.clearItems", input, extra))
       );
     }
   }

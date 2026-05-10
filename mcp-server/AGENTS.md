@@ -63,3 +63,5 @@ Processes own lifecycle, results, orchestration, and idempotent business intent.
 Return `value(data)` for success and framework fault helpers for failures. Avoid throwing for expected business, validation, auth, or forbidden outcomes. Throw only for unexpected system failures.
 
 When forwarding a failed mediator result from one process to another, use `forwardFault(result)` so the fault envelope keeps its original metadata while matching the current process output type.
+
+Do not change .env.example.

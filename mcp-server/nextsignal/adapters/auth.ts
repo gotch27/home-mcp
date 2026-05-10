@@ -1,11 +1,12 @@
 import { authFail, forbidden, type AuthAdapter, type ProcessContext, value } from "@gotch/nextsignal";
 
-export type DevUserRole = "user" | "manager" | "admin";
+export type AuthUserRole = "user" | "manager" | "admin";
 
-export type DevUser = {
+export type AuthUser = {
   id: string;
   name: string;
-  role: DevUserRole;
+  email?: string;
+  role: AuthUserRole;
 };
 
 // Development auth adapter.
@@ -19,7 +20,7 @@ export type DevUser = {
 // - JWT verification
 // - OAuth provider
 // - database-backed user lookup
-export const authAdapter: AuthAdapter<DevUser> = {
+export const authAdapter: AuthAdapter<AuthUser> = {
   currentUser(ctx) {
     const headers = ctx.request?.headers ?? {};
     const id = headers["x-nextsignal-user-id"];
@@ -28,12 +29,13 @@ export const authAdapter: AuthAdapter<DevUser> = {
     return {
       id,
       name: headers["x-nextsignal-user-name"] ?? "Dev User",
+      email: headers["x-nextsignal-user-email"],
       role: parseRole(headers["x-nextsignal-role"])
     };
   },
   async requireUser(ctx) {
     const user = await this.currentUser?.(ctx);
-    return user ? value(user) : authFail("Send x-nextsignal-user-id to act as a dev user.");
+    return user ? value(user) : authFail("Authentication required.");
   },
   async hasRole(ctx, role) {
     const user = await this.currentUser?.(ctx);
@@ -43,7 +45,7 @@ export const authAdapter: AuthAdapter<DevUser> = {
   }
 };
 
-export function requireDevRole(role: DevUserRole) {
+export function requireDevRole(role: AuthUserRole) {
   return async function requireDevRoleHook(ctx: ProcessContext) {
     const user = await authAdapter.currentUser?.(ctx);
     if (!user) return authFail("Authentication required.");
@@ -52,6 +54,6 @@ export function requireDevRole(role: DevUserRole) {
   };
 }
 
-function parseRole(value: string | undefined): DevUserRole {
+function parseRole(value: string | undefined): AuthUserRole {
   return value === "manager" || value === "admin" ? value : "user";
 }

@@ -24,18 +24,25 @@ Use double underscores for nested config paths, for example `NEXTSIGNAL_DATABASE
 
 ### WorkOS AuthKit
 
-The web home page uses WorkOS AuthKit browser sessions. The MCP endpoint uses WorkOS-issued bearer tokens through MCP OAuth resource metadata.
+The public home page describes the MCP server. The `/spaces` page uses WorkOS AuthKit browser sessions so signed-in users can create a home space, join a space by invite code, and choose their active space. The MCP endpoint uses WorkOS-issued bearer tokens through MCP OAuth resource metadata; shopping and todo tools act against the authenticated user's active space.
 
 Required local envs:
 
 ```bash
-NEXTSIGNAL_MCP__RESOURCEURL=http://localhost:3000/api/mcp
-NEXTSIGNAL_WORKOS__AUTHKITDOMAIN=https://your-subdomain.authkit.app
-
+NEXTSIGNAL_DATABASE__URL=postgres://user:password@localhost:5432/home
 NEXTSIGNAL_WORKOS__CLIENTID=client_your_client_id
 NEXTSIGNAL_WORKOS__APIKEY=sk_test_your_api_key
 NEXTSIGNAL_WORKOS__COOKIEPASSWORD=generate_at_least_32_characters
 NEXTSIGNAL_WORKOS__REDIRECTURI=http://localhost:3000/callback
+NEXTSIGNAL_WORKOS__AUTHKITDOMAIN=https://your-subdomain.authkit.app
+NEXTSIGNAL_MCP__RESOURCEURL=http://localhost:3000/api/mcp
+NEXTSIGNAL_NOTIFICATIONS__FROM__NAME=Home MCP
+NEXTSIGNAL_NOTIFICATIONS__FROM__EMAIL=home@example.com
+NEXTSIGNAL_EMAIL__SMTP__HOST=smtp-relay.brevo.com
+NEXTSIGNAL_EMAIL__SMTP__PORT=587
+NEXTSIGNAL_EMAIL__SMTP__SECURE=false
+NEXTSIGNAL_EMAIL__SMTP__USER=your_smtp_user
+NEXTSIGNAL_EMAIL__SMTP__PASS=your_smtp_password
 ```
 
 For production, use your public HTTPS origin for both `NEXTSIGNAL_MCP__RESOURCEURL` and `NEXTSIGNAL_WORKOS__REDIRECTURI`.
@@ -43,6 +50,32 @@ For production, use your public HTTPS origin for both `NEXTSIGNAL_MCP__RESOURCEU
 When developing through a tunnel such as ngrok, set `NEXTSIGNAL_WORKOS__REDIRECTURI`
 to the tunnel callback URL, for example `https://your-ngrok-domain.ngrok-free.dev/callback`.
 The app uses this value as the canonical public origin for AuthKit redirects and sign-out.
+
+For your current ngrok shape, use:
+
+```bash
+NEXTSIGNAL_MCP__RESOURCEURL=https://subocean-olevia-securely.ngrok-free.dev/api/mcp
+NEXTSIGNAL_WORKOS__REDIRECTURI=https://subocean-olevia-securely.ngrok-free.dev/callback
+```
+
+In WorkOS, configure the same public URLs:
+
+- Redirect URI: `https://subocean-olevia-securely.ngrok-free.dev/callback`
+- Sign-in endpoint: `https://subocean-olevia-securely.ngrok-free.dev/login`
+- Sign-out redirect: `https://subocean-olevia-securely.ngrok-free.dev/`
+- MCP resource indicator: `https://subocean-olevia-securely.ngrok-free.dev/api/mcp`
+
+If ngrok gives you a new domain, update both the `NEXTSIGNAL_` env values and the WorkOS dashboard URLs.
+
+### Spaces
+
+Run migrations after pulling this version:
+
+```bash
+pnpm db:migrate
+```
+
+The previous static `family.members` config is gone. Users are saved in `home_users` the first time an authenticated process sees their WorkOS user id. Spaces live in `home_spaces`, memberships live in `home_space_members`, and shopping/todo rows are scoped by `space_id`. Emails are sent to the other members of the active space.
 
 ## Worker
 

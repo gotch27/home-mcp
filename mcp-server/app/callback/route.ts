@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", getWebAuthBaseUrl()));
   }
 
-  const pkce = JSON.parse(pkceCookie) as { state?: string; codeVerifier?: string };
+  const pkce = JSON.parse(pkceCookie) as { state?: string; codeVerifier?: string; returnPath?: string };
   if (!pkce.state || !pkce.codeVerifier) {
     return NextResponse.redirect(new URL("/login", getWebAuthBaseUrl()));
   }
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     codeVerifier: pkce.codeVerifier
   });
 
-  const response = NextResponse.redirect(getWebAuthBaseUrl());
+  const response = NextResponse.redirect(new URL(normalizeReturnPath(pkce.returnPath) ?? "/", getWebAuthBaseUrl()));
   response.cookies.set(webSessionCookieName, await encryptWebSession(session), {
     ...getWebAuthCookieOptions(),
     maxAge: 60 * 60 * 24 * 7
@@ -41,4 +41,9 @@ export async function GET(request: NextRequest) {
   });
 
   return response;
+}
+
+function normalizeReturnPath(value: string | undefined) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return undefined;
+  return value;
 }

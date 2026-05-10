@@ -1,16 +1,41 @@
-export const FAMILY_MEMBER_NAMES = ["Gorazd", "Marija", "Bojana", "Zvonko"] as const;
-export const TODO_ASSIGNEES = [...FAMILY_MEMBER_NAMES, "all"] as const;
+export type TodoAssignee = string;
+export type SpaceMemberRole = "owner" | "member";
 
-export type FamilyMemberName = (typeof FAMILY_MEMBER_NAMES)[number];
-export type TodoAssignee = (typeof TODO_ASSIGNEES)[number];
-
-export type FamilyMember = {
-  name: FamilyMemberName;
+export type HomeUser = {
+  id: string;
   email: string;
+  displayName: string;
+  activeSpaceId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type HomeSpace = {
+  id: string;
+  name: string;
+  inviteCode: string;
+  createdByUserId: string;
+  createdAt: string;
+};
+
+export type HomeSpaceMember = {
+  spaceId: string;
+  userId: string;
+  role: SpaceMemberRole;
+  email: string;
+  displayName: string;
+  joinedAt: string;
+};
+
+export type ActiveHomeSpace = {
+  user: HomeUser;
+  space: HomeSpace;
+  membership: HomeSpaceMember;
 };
 
 export type ShoppingItem = {
   id: string;
+  spaceId: string;
   name: string;
   quantity: string;
   store: string | null;
@@ -19,6 +44,7 @@ export type ShoppingItem = {
 
 export type TodoItem = {
   id: string;
+  spaceId: string;
   title: string;
   assignee: TodoAssignee;
   completedAt: string | null;
@@ -28,7 +54,8 @@ export type TodoItem = {
 export type HomeChangeNotification = {
   domain: "shopping" | "todos";
   action: string;
-  changedBy?: FamilyMemberName;
+  spaceName: string;
+  changedBy: string;
   summary: string;
   details: string[];
   snapshot: {

@@ -8,6 +8,41 @@
       "when": 1778025600000,
       "tag": "0000_home_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778441758015,
+      "tag": "0001_friendly_loners",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778443000000,
+      "tag": "0002_repair_space_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778443600000,
+      "tag": "0003_repair_legacy_space_members",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1778443900000,
+      "tag": "0004_nullable_legacy_member_space",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1778444300000,
+      "tag": "0005_cleanup_legacy_space_columns",
+      "breakpoints": true
     }
   ]
 }

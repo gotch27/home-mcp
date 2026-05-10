@@ -10,7 +10,8 @@ export default async function proxy(request: NextRequest) {
   const response = NextResponse.redirect(signIn.url);
   response.cookies.set(webPkceCookieName, JSON.stringify({
     state: signIn.state,
-    codeVerifier: signIn.codeVerifier
+    codeVerifier: signIn.codeVerifier,
+    returnPath: `${request.nextUrl.pathname}${request.nextUrl.search}`
   }), {
     ...getWebAuthCookieOptions(),
     maxAge: 60 * 10
@@ -19,5 +20,5 @@ export default async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/"]
+  matcher: ["/spaces/:path*"]
 };

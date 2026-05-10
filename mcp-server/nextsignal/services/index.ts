@@ -1,7 +1,10 @@
 import { emailService } from "@/nextsignal/services/email";
 import { logsService } from "@/nextsignal/services/logs";
 import { shoppingService } from "@/nextsignal/services/shopping";
+import { spacesService } from "@/nextsignal/services/spaces";
 import { todosService } from "@/nextsignal/services/todos";
+import { usersService } from "@/nextsignal/services/users";
+import { workosService } from "@/nextsignal/services/workos";
 
 export type HealthSnapshot = {
   status: "ok";
@@ -25,7 +28,10 @@ export const services = {
     }
   },
   shopping: shoppingService,
+  spaces: spacesService,
   todos: todosService,
+  users: usersService,
+  workos: workosService,
   email: emailService,
   logs: logsService
 };
