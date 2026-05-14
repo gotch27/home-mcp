@@ -1,4 +1,4 @@
-import { businessProcess, forwardFault, notFound, requireUser, validateWith, value } from "@gotch/nextsignal";
+import { businessProcess, forbidden, forwardFault, notFound, requireUser, validateWith, value } from "@gotch/nextsignal";
 import type { ProcessContext } from "@gotch/nextsignal";
 import { requireHomeUser } from "@/nextsignal/processes/business/context";
 import type { AppServices } from "@/nextsignal/services";
@@ -20,6 +20,17 @@ async function spacesJoinHandle(ctx: ProcessContext<AppServices>, input: SpacesJ
   const userResult = await requireHomeUser(ctx);
   if (!userResult.ok) return forwardFault(userResult);
   const user = userResult.data!;
+  const existingSpaces = await ctx.services.spaces.listForUser(user.id);
+
+  if (existingSpaces.length > 0) {
+    await ctx.logger.warn({
+      message: "User attempted to join another home space.",
+      process: ctx.metadata.processName,
+      correlationId: ctx.metadata.correlationId,
+      data: { userId: user.id, spaceCount: existingSpaces.length }
+    });
+    return forbidden("You are already in a home space.");
+  }
 
   await ctx.logger.info({
     message: "Joining home space.",
