@@ -7,6 +7,7 @@ import type { ActiveHomeSpace, HomeChangeNotification, ShoppingItem } from "@/ne
 
 export type ShoppingAddItemOutput = {
   item: ShoppingItem;
+  addedItems: ShoppingItem[];
   items: ShoppingItem[];
 };
 
@@ -27,21 +28,23 @@ async function shoppingAddItemHandle(ctx: ProcessContext<AppServices>, input: Sh
   const activeResult = await requireActiveHomeSpace(ctx);
   if (!activeResult.ok) return forwardFault(activeResult);
   const activeSpace = activeResult.data!;
+  const itemsToAdd = getShoppingItemsToAdd(input);
 
   await ctx.logger.info({
-    message: "Adding shopping item.",
+    message: "Adding shopping items.",
     process: ctx.metadata.processName,
     correlationId: ctx.metadata.correlationId,
     data: {
-      name: input.name,
-      quantity: input.quantity,
-      store: input.store,
+      itemCount: itemsToAdd.length,
       spaceId: activeSpace.space.id,
       userId: activeSpace.user.id
     }
   });
 
-  const item = await ctx.services.shopping.addItem({ ...input, spaceId: activeSpace.space.id });
+  const addedItems = await ctx.services.shopping.addItems({
+    spaceId: activeSpace.space.id,
+    items: itemsToAdd
+  });
   const items = await ctx.services.shopping.listItems({ spaceId: activeSpace.space.id });
   const recipients = await ctx.services.spaces.listNotificationMembers({
     spaceId: activeSpace.space.id,
@@ -49,44 +52,53 @@ async function shoppingAddItemHandle(ctx: ProcessContext<AppServices>, input: Sh
   });
 
   ctx.services.email.sendSpaceChangeNotificationAsync(
-    createShoppingAddNotification(activeSpace, { item, items }),
+    createShoppingAddNotification(activeSpace, { item: addedItems[0], addedItems, items }),
     recipients,
     ctx.logger
   );
 
   await ctx.logger.info({
-    message: "Shopping item added.",
+    message: "Shopping items added.",
     process: ctx.metadata.processName,
     correlationId: ctx.metadata.correlationId,
     data: {
-      id: item.id,
+      addedCount: addedItems.length,
       spaceId: activeSpace.space.id,
-      name: item.name,
-      store: item.store,
       itemCount: items.length
     }
   });
 
-  return value({ item, items });
+  return value({ item: addedItems[0], addedItems, items });
 }
 
 function createShoppingAddNotification(
   activeSpace: ActiveHomeSpace,
   data: ShoppingAddItemOutput
 ): HomeChangeNotification {
+  const count = data.addedItems.length;
+
   return {
     domain: "shopping",
     action: "add",
     spaceName: activeSpace.space.name,
     changedBy: activeSpace.user.displayName,
-    summary: `${activeSpace.user.displayName} added ${data.item.name} to the shopping list.`,
-    details: [
-      `Quantity: ${data.item.quantity}`,
-      `Store: ${data.item.store ?? "Any"}`
-    ],
+    summary: count === 1
+      ? `${activeSpace.user.displayName} added ${data.item.name} to the shopping list.`
+      : `${activeSpace.user.displayName} added ${count} items to the shopping list.`,
+    details: data.addedItems.map((item) => `${item.name} x ${item.quantity}${item.store ? `, ${item.store}` : ""}`),
     snapshot: {
       shoppingItems: data.items
     },
     changedAt: new Date().toISOString()
   };
+}
+
+function getShoppingItemsToAdd(input: ShoppingAddItemInput) {
+  if (input.items?.length) return input.items;
+
+  return [{
+    name: input.name!,
+    quantity: input.quantity,
+    store: input.store
+  }];
 }

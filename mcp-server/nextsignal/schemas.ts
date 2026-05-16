@@ -29,11 +29,19 @@ export const shoppingListItemsInputSchema = z.object({
   store: z.string().min(1).optional()
 });
 
-export const shoppingAddItemInputSchema = z.object({
+export const shoppingAddItemSchema = z.object({
   name: z.string().min(1),
   quantity: z.string().min(1).optional(),
   store: z.string().min(1).optional()
 });
+
+export const shoppingAddItemInputSchema = shoppingAddItemSchema.extend({
+  name: z.string().min(1).optional(),
+  items: z.array(shoppingAddItemSchema).min(1).optional()
+}).refine(
+  (input) => Boolean(input.name || input.items?.length),
+  { message: "Provide either a single item with `name`, or bulk items with `items`." }
+);
 
 export const shoppingClearItemsInputSchema = z.object({
   all: z.boolean().optional(),

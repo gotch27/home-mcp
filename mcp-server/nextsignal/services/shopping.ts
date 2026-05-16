@@ -15,6 +15,15 @@ export type AddShoppingItemInput = {
   store?: string;
 };
 
+export type AddShoppingItemsInput = {
+  spaceId: string;
+  items: Array<{
+    name: string;
+    quantity?: string;
+    store?: string;
+  }>;
+};
+
 export type ClearShoppingItemsInput = {
   spaceId: string;
   all?: boolean;
@@ -40,17 +49,29 @@ export const shoppingService = {
   },
 
   async addItem(input: AddShoppingItemInput): Promise<ShoppingItem> {
+    const [item] = await this.addItems({
+      spaceId: input.spaceId,
+      items: [{ name: input.name, quantity: input.quantity, store: input.store }]
+    });
+
+    return item;
+  },
+
+  async addItems(input: AddShoppingItemsInput): Promise<ShoppingItem[]> {
     const db = await getDb();
-    const id = crypto.randomUUID();
-    const name = input.name.trim();
-    const quantity = normalizeOptionalText(input.quantity) ?? "1";
-    const store = normalizeOptionalText(input.store) ?? null;
-    const [row] = await db
+    const values = input.items.map((item) => ({
+      id: crypto.randomUUID(),
+      spaceId: input.spaceId,
+      name: item.name.trim(),
+      quantity: normalizeOptionalText(item.quantity) ?? "1",
+      store: normalizeOptionalText(item.store) ?? null
+    }));
+    const rows = await db
       .insert(homeShoppingItems)
-      .values({ id, spaceId: input.spaceId, name, quantity, store })
+      .values(values)
       .returning();
 
-    return mapShoppingItem(row);
+    return rows.map(mapShoppingItem);
   },
 
   async clearItems(input: ClearShoppingItemsInput): Promise<ShoppingItem[]> {

@@ -8,6 +8,12 @@ import type {
   ShoppingListItemsInput
 } from "@/nextsignal/schemas";
 
+const shoppingAddItemSchema = {
+  name: z.string().min(1),
+  quantity: z.string().min(1).optional(),
+  store: z.string().min(1).optional()
+};
+
 export const shoppingTools: NextSignalMcpTool[] = [
   {
     register(server, { app }) {
@@ -30,11 +36,12 @@ export const shoppingTools: NextSignalMcpTool[] = [
         "shopping_add_item",
         {
           title: "Add Shopping Item",
-          description: "Adds an item to the active home space shopping list and emails other space members.",
+          description: "Adds one or more items to the active home space shopping list and emails other space members once.",
           inputSchema: {
-            name: z.string().min(1),
+            name: z.string().min(1).optional(),
             quantity: z.string().min(1).optional(),
-            store: z.string().min(1).optional()
+            store: z.string().min(1).optional(),
+            items: z.array(z.object(shoppingAddItemSchema)).min(1).optional()
           }
         },
         async (input, extra) => toMcpToolResult(await dispatchMcpTool<ShoppingAddItemInput>(app, "shopping.addItem", input, extra))
