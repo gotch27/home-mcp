@@ -66,13 +66,13 @@ export const homeTodos = pgTable(
     id: text("id").primaryKey(),
     spaceId: text("space_id").notNull(),
     title: text("title").notNull(),
-    assignee: text("assignee").notNull(),
+    assigneeUserId: text("assignee_user_id").notNull(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
   },
   (table) => [
-    index("home_todos_space_open_assignee_idx").on(table.spaceId, table.assignee, table.completedAt, table.createdAt),
-    index("home_todos_open_assignee_idx").on(table.assignee, table.completedAt, table.createdAt)
+    index("home_todos_space_open_assignee_idx").on(table.spaceId, table.assigneeUserId, table.completedAt, table.createdAt),
+    index("home_todos_open_assignee_idx").on(table.assigneeUserId, table.completedAt, table.createdAt)
   ]
 );
 

@@ -7,11 +7,13 @@ export const healthInputSchema = z.object({}).passthrough();
 
 export type HealthInput = z.infer<typeof healthInputSchema>;
 
-export const todoAssigneeSchema = z.string().trim().min(1);
+export const todoAssigneeUserIdSchema = z.string().trim().min(1);
 
 export const ensureCurrentUserInputSchema = z.object({}).passthrough();
 
 export const spacesListInputSchema = z.object({}).passthrough();
+
+export const spacesListMembersInputSchema = z.object({}).passthrough();
 
 export const spacesCreateInputSchema = z.object({
   name: z.string().trim().min(1).max(80)
@@ -54,19 +56,19 @@ export const shoppingClearItemsInputSchema = z.object({
 );
 
 export const todoListInputSchema = z.object({
-  assignee: todoAssigneeSchema.optional(),
+  assigneeUserId: todoAssigneeUserIdSchema.optional(),
   includeCompleted: z.boolean().optional()
 });
 
 export const todoAddInputSchema = z.object({
   title: z.string().min(1),
-  assignee: todoAssigneeSchema
+  assigneeUserId: todoAssigneeUserIdSchema
 });
 
 export const todoCompleteInputSchema = z.object({
   id: z.string().min(1).optional(),
   title: z.string().min(1).optional(),
-  assignee: todoAssigneeSchema.optional()
+  assigneeUserId: todoAssigneeUserIdSchema.optional()
 }).refine(
   (input) => Boolean(input.id || input.title),
   { message: "Provide either `id` or `title`." }
@@ -85,7 +87,8 @@ const todoItemSchema = z.object({
   id: z.string(),
   spaceId: z.string(),
   title: z.string(),
-  assignee: todoAssigneeSchema,
+  assigneeUserId: todoAssigneeUserIdSchema,
+  assigneeDisplayName: z.string(),
   completedAt: z.string().nullable(),
   createdAt: z.string()
 });
@@ -113,6 +116,7 @@ export type TodoCompleteInput = z.infer<typeof todoCompleteInputSchema>;
 export type HomeChangeNotificationInput = z.infer<typeof homeChangeNotificationSchema>;
 export type EnsureCurrentUserInput = z.infer<typeof ensureCurrentUserInputSchema>;
 export type SpacesListInput = z.infer<typeof spacesListInputSchema>;
+export type SpacesListMembersInput = z.infer<typeof spacesListMembersInputSchema>;
 export type SpacesCreateInput = z.infer<typeof spacesCreateInputSchema>;
 export type SpacesJoinInput = z.infer<typeof spacesJoinInputSchema>;
 export type SpacesSelectInput = z.infer<typeof spacesSelectInputSchema>;

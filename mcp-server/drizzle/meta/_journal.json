@@ -43,6 +43,13 @@
       "when": 1778444300000,
       "tag": "0005_cleanup_legacy_space_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778956800000,
+      "tag": "0006_deterministic_todo_assignees",
+      "breakpoints": true
     }
   ]
 }

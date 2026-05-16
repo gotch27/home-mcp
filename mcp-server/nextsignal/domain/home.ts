@@ -1,4 +1,3 @@
-export type TodoAssignee = string;
 export type SpaceMemberRole = "owner" | "member";
 
 export type HomeUser = {
@@ -46,7 +45,8 @@ export type TodoItem = {
   id: string;
   spaceId: string;
   title: string;
-  assignee: TodoAssignee;
+  assigneeUserId: string;
+  assigneeDisplayName: string;
   completedAt: string | null;
   createdAt: string;
 };

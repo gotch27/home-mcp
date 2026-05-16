@@ -4,7 +4,7 @@ import { toMcpToolResult } from "@/nextsignal/mcp/result";
 import type { NextSignalMcpTool } from "@/nextsignal/mcp/types";
 import type { TodoAddInput, TodoCompleteInput, TodoListInput } from "@/nextsignal/schemas";
 
-const assigneeSchema = z.string().min(1);
+const assigneeUserIdSchema = z.string().min(1);
 
 export const todoTools: NextSignalMcpTool[] = [
   {
@@ -13,9 +13,9 @@ export const todoTools: NextSignalMcpTool[] = [
         "todo_list",
         {
           title: "List Todos",
-          description: "Lists todos in the active home space for everyone or for an assignee. Assignee lists include shared todos assigned to all.",
+          description: "Lists todos in the active home space, optionally filtered by a deterministic assignee userId from space_list_members.",
           inputSchema: {
-            assignee: assigneeSchema.optional(),
+            assigneeUserId: assigneeUserIdSchema.optional(),
             includeCompleted: z.boolean().optional()
           }
         },
@@ -29,10 +29,10 @@ export const todoTools: NextSignalMcpTool[] = [
         "todo_add",
         {
           title: "Add Todo",
-          description: "Adds a todo for everyone or for an assignee in the active home space, then emails other space members.",
+          description: "Adds a todo assigned to a member of the active home space. Use space_list_members first to get the deterministic assigneeUserId.",
           inputSchema: {
             title: z.string().min(1),
-            assignee: assigneeSchema
+            assigneeUserId: assigneeUserIdSchema
           }
         },
         async (input, extra) => toMcpToolResult(await dispatchMcpTool<TodoAddInput>(app, "todos.add", input, extra))
@@ -45,11 +45,11 @@ export const todoTools: NextSignalMcpTool[] = [
         "todo_complete",
         {
           title: "Complete Todo",
-          description: "Completes open todos in the active home space by id or title, optionally scoped by assignee, then emails other space members.",
+          description: "Completes open todos in the active home space by id or title, optionally scoped by assigneeUserId from space_list_members, then emails other space members.",
           inputSchema: {
             id: z.string().min(1).optional(),
             title: z.string().min(1).optional(),
-            assignee: assigneeSchema.optional()
+            assigneeUserId: assigneeUserIdSchema.optional()
           }
         },
         async (input, extra) => toMcpToolResult(await dispatchMcpTool<TodoCompleteInput>(app, "todos.complete", input, extra))

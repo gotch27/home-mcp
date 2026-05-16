@@ -35,7 +35,7 @@ async function todoCompleteHandle(ctx: ProcessContext<AppServices>, input: TodoC
     data: {
       byId: Boolean(input.id),
       byTitle: Boolean(input.title),
-      assignee: input.assignee,
+      assigneeUserId: input.assigneeUserId,
       spaceId: activeSpace.space.id,
       userId: activeSpace.user.id
     }
@@ -50,7 +50,7 @@ async function todoCompleteHandle(ctx: ProcessContext<AppServices>, input: TodoC
       data: {
         byId: Boolean(input.id),
         byTitle: Boolean(input.title),
-        assignee: input.assignee,
+        assigneeUserId: input.assigneeUserId,
         spaceId: activeSpace.space.id
       }
     });
@@ -95,7 +95,7 @@ function createTodoCompleteNotification(
     spaceName: activeSpace.space.name,
     changedBy: activeSpace.user.displayName,
     summary: `${activeSpace.user.displayName} completed ${count} todo${count === 1 ? "" : "s"}.`,
-    details: data.completedTodos.map((todo) => `${todo.title} (${todo.assignee})`),
+    details: data.completedTodos.map((todo) => `${todo.title} (${todo.assigneeDisplayName})`),
     snapshot: {
       todos: data.todos
     },

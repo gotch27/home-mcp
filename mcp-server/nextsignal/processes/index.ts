@@ -1,6 +1,7 @@
 import { healthApi } from "@/nextsignal/processes/api/health";
 import { pruneLogsApi } from "@/nextsignal/processes/api/logs/prune";
 import { shoppingListItemsApi } from "@/nextsignal/processes/api/shopping/list-items";
+import { spacesListMembersApi } from "@/nextsignal/processes/api/spaces/list-members";
 import { todoListApi } from "@/nextsignal/processes/api/todos/list";
 import { healthBusiness } from "@/nextsignal/processes/business/health";
 import { shoppingAddItem } from "@/nextsignal/processes/business/shopping/add-item";
@@ -24,6 +25,7 @@ export const processes = [
   healthApi,
   pruneLogsApi,
   shoppingListItemsApi,
+  spacesListMembersApi,
   todoListApi,
   healthBusiness,
   ensureCurrentUser,

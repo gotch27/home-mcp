@@ -164,7 +164,7 @@ function renderTextSnapshot(notification: HomeChangeNotification) {
   const todos = notification.snapshot.todos ?? [];
   return [
     "Open todos:",
-    ...(todos.length === 0 ? ["- Empty"] : todos.map((todo) => `- ${todo.title} (${todo.assignee})`))
+    ...(todos.length === 0 ? ["- Empty"] : todos.map((todo) => `- ${todo.title} (${todo.assigneeDisplayName})`))
   ];
 }
 

@@ -1,4 +1,4 @@
-import { businessProcess, forwardFault, requireUser, validateWith, value } from "@gotch/nextsignal";
+import { businessProcess, forwardFault, notFound, requireUser, validateWith, value } from "@gotch/nextsignal";
 import type { ProcessContext } from "@gotch/nextsignal";
 import { requireActiveHomeSpace } from "@/nextsignal/processes/business/context";
 import type { AppServices } from "@/nextsignal/services";
@@ -34,18 +34,30 @@ async function todoAddHandle(ctx: ProcessContext<AppServices>, input: TodoAddInp
     correlationId: ctx.metadata.correlationId,
     data: {
       title: input.title,
-      assignee: input.assignee,
+      assigneeUserId: input.assigneeUserId,
       spaceId: activeSpace.space.id,
       userId: activeSpace.user.id
     }
   });
 
+  const assignee = await ctx.services.spaces.getMembership(input.assigneeUserId, activeSpace.space.id);
+  if (!assignee) {
+    await ctx.logger.warn({
+      message: "Todo assignee is not a member of the active home space.",
+      process: ctx.metadata.processName,
+      correlationId: ctx.metadata.correlationId,
+      data: {
+        assigneeUserId: input.assigneeUserId,
+        spaceId: activeSpace.space.id
+      }
+    });
+
+    return notFound("Todo assignee must be a member of the active home space. Use space_list_members to choose a valid userId.");
+  }
+
   const todo = await ctx.services.todos.add({ ...input, spaceId: activeSpace.space.id });
   const todos = await ctx.services.todos.list({ spaceId: activeSpace.space.id });
-  const recipients = await ctx.services.spaces.listNotificationMembers({
-    spaceId: activeSpace.space.id,
-    excludeUserId: activeSpace.user.id
-  });
+  const recipients = assignee.userId === activeSpace.user.id ? [] : [assignee];
 
   ctx.services.email.sendSpaceChangeNotificationAsync(
     createTodoAddNotification(activeSpace, { todo, todos }),
@@ -60,7 +72,7 @@ async function todoAddHandle(ctx: ProcessContext<AppServices>, input: TodoAddInp
     data: {
       id: todo.id,
       spaceId: activeSpace.space.id,
-      assignee: todo.assignee,
+      assigneeUserId: todo.assigneeUserId,
       todoCount: todos.length
     }
   });
@@ -74,7 +86,7 @@ function createTodoAddNotification(activeSpace: ActiveHomeSpace, data: TodoAddOu
     action: "add",
     spaceName: activeSpace.space.name,
     changedBy: activeSpace.user.displayName,
-    summary: `${activeSpace.user.displayName} added a todo for ${data.todo.assignee}.`,
+    summary: `${activeSpace.user.displayName} added a todo for ${data.todo.assigneeDisplayName}.`,
     details: [`Todo: ${data.todo.title}`],
     snapshot: {
       todos: data.todos
