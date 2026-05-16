@@ -47,20 +47,11 @@ async function todoAddHandle(ctx: ProcessContext<AppServices>, input: TodoAddInp
     excludeUserId: activeSpace.user.id
   });
 
-  try {
-    await ctx.services.email.sendSpaceChangeNotification(
-      createTodoAddNotification(activeSpace, { todo, todos }),
-      recipients,
-      ctx.logger
-    );
-  } catch (error) {
-    await ctx.logger.error({
-      message: "Failed to send todo add notification email.",
-      process: ctx.metadata.processName,
-      correlationId: ctx.metadata.correlationId,
-      error
-    });
-  }
+  ctx.services.email.sendSpaceChangeNotificationAsync(
+    createTodoAddNotification(activeSpace, { todo, todos }),
+    recipients,
+    ctx.logger
+  );
 
   await ctx.logger.info({
     message: "Todo added.",

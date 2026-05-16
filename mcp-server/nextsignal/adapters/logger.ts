@@ -4,17 +4,17 @@ import { nextsignalLogs } from "@/nextsignal/db/schema";
 import { getDb } from "@/nextsignal/services/database";
 
 export const loggerAdapter: LoggerAdapter = {
-  async debug(entry) {
-    await writeLog("debug", entry);
+  debug(entry) {
+    void writeLog("debug", entry);
   },
-  async info(entry) {
-    await writeLog("info", entry);
+  info(entry) {
+    void writeLog("info", entry);
   },
-  async warn(entry) {
-    await writeLog("warn", entry);
+  warn(entry) {
+    void writeLog("warn", entry);
   },
-  async error(entry) {
-    await writeLog("error", entry);
+  error(entry) {
+    void writeLog("error", entry);
   }
 };
 

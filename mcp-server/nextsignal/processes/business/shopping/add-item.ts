@@ -48,20 +48,11 @@ async function shoppingAddItemHandle(ctx: ProcessContext<AppServices>, input: Sh
     excludeUserId: activeSpace.user.id
   });
 
-  try {
-    await ctx.services.email.sendSpaceChangeNotification(
-      createShoppingAddNotification(activeSpace, { item, items }),
-      recipients,
-      ctx.logger
-    );
-  } catch (error) {
-    await ctx.logger.error({
-      message: "Failed to send shopping add notification email.",
-      process: ctx.metadata.processName,
-      correlationId: ctx.metadata.correlationId,
-      error
-    });
-  }
+  ctx.services.email.sendSpaceChangeNotificationAsync(
+    createShoppingAddNotification(activeSpace, { item, items }),
+    recipients,
+    ctx.logger
+  );
 
   await ctx.logger.info({
     message: "Shopping item added.",

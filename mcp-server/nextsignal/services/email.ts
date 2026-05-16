@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { after } from "next/server";
 import type { LoggerAdapter } from "@gotch/nextsignal";
 import { config } from "@/nextsignal/config";
 import type { HomeChangeNotification } from "@/nextsignal/domain/home";
@@ -22,6 +23,29 @@ export type NotificationRecipient = {
 };
 
 export const emailService = {
+  sendSpaceChangeNotificationAsync(
+    notification: HomeChangeNotification,
+    recipients: NotificationRecipient[],
+    logger?: LoggerAdapter
+  ): void {
+    runAfterResponse(async () => {
+      try {
+        await this.sendSpaceChangeNotification(notification, recipients, logger);
+      } catch (error) {
+        await logger?.error({
+          message: "Failed to send space change notification email.",
+          data: {
+            domain: notification.domain,
+            action: notification.action,
+            spaceName: notification.spaceName,
+            recipientCount: recipients.length
+          },
+          error
+        });
+      }
+    });
+  },
+
   async sendSpaceChangeNotification(
     notification: HomeChangeNotification,
     recipients: NotificationRecipient[],
@@ -92,6 +116,16 @@ export const emailService = {
     });
   }
 };
+
+function runAfterResponse(task: () => Promise<void>) {
+  try {
+    after(task);
+  } catch {
+    setTimeout(() => {
+      void task();
+    }, 0);
+  }
+}
 
 function readSmtpConfig(): SmtpConfig {
   const smtp = config.require<SmtpConfig>("email.smtp");

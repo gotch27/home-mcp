@@ -63,20 +63,11 @@ async function todoCompleteHandle(ctx: ProcessContext<AppServices>, input: TodoC
     spaceId: activeSpace.space.id,
     excludeUserId: activeSpace.user.id
   });
-  try {
-    await ctx.services.email.sendSpaceChangeNotification(
-      createTodoCompleteNotification(activeSpace, { completedTodos, todos }),
-      recipients,
-      ctx.logger
-    );
-  } catch (error) {
-    await ctx.logger.error({
-      message: "Failed to send todo completion notification email.",
-      process: ctx.metadata.processName,
-      correlationId: ctx.metadata.correlationId,
-      error
-    });
-  }
+  ctx.services.email.sendSpaceChangeNotificationAsync(
+    createTodoCompleteNotification(activeSpace, { completedTodos, todos }),
+    recipients,
+    ctx.logger
+  );
 
   await ctx.logger.info({
     message: "Todos completed.",

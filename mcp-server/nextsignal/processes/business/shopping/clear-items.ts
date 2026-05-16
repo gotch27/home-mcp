@@ -65,20 +65,11 @@ async function shoppingClearItemsHandle(ctx: ProcessContext<AppServices>, input:
     spaceId: activeSpace.space.id,
     excludeUserId: activeSpace.user.id
   });
-  try {
-    await ctx.services.email.sendSpaceChangeNotification(
-      createShoppingClearNotification(activeSpace, { clearedItems, items }),
-      recipients,
-      ctx.logger
-    );
-  } catch (error) {
-    await ctx.logger.error({
-      message: "Failed to send shopping clear notification email.",
-      process: ctx.metadata.processName,
-      correlationId: ctx.metadata.correlationId,
-      error
-    });
-  }
+  ctx.services.email.sendSpaceChangeNotificationAsync(
+    createShoppingClearNotification(activeSpace, { clearedItems, items }),
+    recipients,
+    ctx.logger
+  );
 
   await ctx.logger.info({
     message: "Shopping items cleared.",
