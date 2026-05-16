@@ -14,6 +14,8 @@ const shoppingAddItemSchema = {
   store: z.string().min(1).optional()
 };
 
+const spaceIdSchema = z.string().min(1);
+
 export const shoppingTools: NextSignalMcpTool[] = [
   {
     register(server, { app }) {
@@ -21,8 +23,9 @@ export const shoppingTools: NextSignalMcpTool[] = [
         "shopping_list_items",
         {
           title: "List Shopping Items",
-          description: "Lists current shopping items, optionally filtered by store.",
+          description: "Lists current shopping items in the requested home space, optionally filtered by store.",
           inputSchema: {
+            spaceId: spaceIdSchema,
             store: z.string().min(1).optional()
           }
         },
@@ -36,8 +39,9 @@ export const shoppingTools: NextSignalMcpTool[] = [
         "shopping_add_item",
         {
           title: "Add Shopping Item",
-          description: "Adds one or more items to the active home space shopping list and emails other space members once.",
+          description: "Adds one or more items to the requested home space shopping list and emails other space members once.",
           inputSchema: {
+            spaceId: spaceIdSchema,
             name: z.string().min(1).optional(),
             quantity: z.string().min(1).optional(),
             store: z.string().min(1).optional(),
@@ -54,8 +58,9 @@ export const shoppingTools: NextSignalMcpTool[] = [
         "shopping_clear_items",
         {
           title: "Clear Shopping Items",
-          description: "Clears active home space shopping items by id, name, store, or all, then emails other space members.",
+          description: "Clears requested home space shopping items by id, name, store, or all, then emails other space members.",
           inputSchema: {
+            spaceId: spaceIdSchema,
             all: z.boolean().optional(),
             ids: z.array(z.string().min(1)).optional(),
             names: z.array(z.string().min(1)).optional(),

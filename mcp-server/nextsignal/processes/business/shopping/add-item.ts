@@ -1,6 +1,6 @@
 import { businessProcess, forwardFault, requireUser, validateWith, value } from "@gotch/nextsignal";
 import type { ProcessContext } from "@gotch/nextsignal";
-import { requireActiveHomeSpace } from "@/nextsignal/processes/business/context";
+import { requireHomeSpace } from "@/nextsignal/processes/business/context";
 import type { AppServices } from "@/nextsignal/services";
 import { shoppingAddItemInputSchema, type ShoppingAddItemInput } from "@/nextsignal/schemas";
 import type { ActiveHomeSpace, HomeChangeNotification, ShoppingItem } from "@/nextsignal/domain/home";
@@ -14,7 +14,7 @@ export type ShoppingAddItemOutput = {
 export const shoppingAddItem = businessProcess<ShoppingAddItemInput, ShoppingAddItemOutput, AppServices>({
   name: "shopping.addItem",
   metadata: {
-    description: "Adds a shopping item and notifies the active home space.",
+    description: "Adds a shopping item and notifies the requested home space.",
     tags: ["shopping", "business"],
     owner: "home",
     version: "0.1.0"
@@ -25,9 +25,9 @@ export const shoppingAddItem = businessProcess<ShoppingAddItemInput, ShoppingAdd
 });
 
 async function shoppingAddItemHandle(ctx: ProcessContext<AppServices>, input: ShoppingAddItemInput) {
-  const activeResult = await requireActiveHomeSpace(ctx);
-  if (!activeResult.ok) return forwardFault(activeResult);
-  const activeSpace = activeResult.data!;
+  const spaceResult = await requireHomeSpace(ctx, input.spaceId);
+  if (!spaceResult.ok) return forwardFault(spaceResult);
+  const activeSpace = spaceResult.data!;
   const itemsToAdd = getShoppingItemsToAdd(input);
 
   await ctx.logger.info({
@@ -36,18 +36,18 @@ async function shoppingAddItemHandle(ctx: ProcessContext<AppServices>, input: Sh
     correlationId: ctx.metadata.correlationId,
     data: {
       itemCount: itemsToAdd.length,
-      spaceId: activeSpace.space.id,
+      spaceId: input.spaceId,
       userId: activeSpace.user.id
     }
   });
 
   const addedItems = await ctx.services.shopping.addItems({
-    spaceId: activeSpace.space.id,
+    spaceId: input.spaceId,
     items: itemsToAdd
   });
-  const items = await ctx.services.shopping.listItems({ spaceId: activeSpace.space.id });
+  const items = await ctx.services.shopping.listItems({ spaceId: input.spaceId });
   const recipients = await ctx.services.spaces.listNotificationMembers({
-    spaceId: activeSpace.space.id,
+    spaceId: input.spaceId,
     excludeUserId: activeSpace.user.id
   });
 
@@ -63,7 +63,7 @@ async function shoppingAddItemHandle(ctx: ProcessContext<AppServices>, input: Sh
     correlationId: ctx.metadata.correlationId,
     data: {
       addedCount: addedItems.length,
-      spaceId: activeSpace.space.id,
+      spaceId: input.spaceId,
       itemCount: items.length
     }
   });

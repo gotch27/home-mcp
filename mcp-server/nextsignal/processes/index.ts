@@ -9,7 +9,6 @@ import { shoppingClearItems } from "@/nextsignal/processes/business/shopping/cle
 import { spacesCreate } from "@/nextsignal/processes/business/spaces/create";
 import { spacesJoin } from "@/nextsignal/processes/business/spaces/join";
 import { spacesList } from "@/nextsignal/processes/business/spaces/list";
-import { spacesSelect } from "@/nextsignal/processes/business/spaces/select";
 import { todoAdd } from "@/nextsignal/processes/business/todos/add";
 import { todoComplete } from "@/nextsignal/processes/business/todos/complete";
 import { ensureCurrentUser } from "@/nextsignal/processes/business/users/ensure-current";
@@ -32,7 +31,6 @@ export const processes = [
   spacesList,
   spacesCreate,
   spacesJoin,
-  spacesSelect,
   shoppingAddItem,
   shoppingClearItems,
   todoAdd,

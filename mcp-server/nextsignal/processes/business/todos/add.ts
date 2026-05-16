@@ -1,6 +1,6 @@
 import { businessProcess, forwardFault, notFound, requireUser, validateWith, value } from "@gotch/nextsignal";
 import type { ProcessContext } from "@gotch/nextsignal";
-import { requireActiveHomeSpace } from "@/nextsignal/processes/business/context";
+import { requireHomeSpace } from "@/nextsignal/processes/business/context";
 import type { AppServices } from "@/nextsignal/services";
 import { todoAddInputSchema, type TodoAddInput } from "@/nextsignal/schemas";
 import type { ActiveHomeSpace, HomeChangeNotification, TodoItem } from "@/nextsignal/domain/home";
@@ -13,7 +13,7 @@ export type TodoAddOutput = {
 export const todoAdd = businessProcess<TodoAddInput, TodoAddOutput, AppServices>({
   name: "todos.add",
   metadata: {
-    description: "Adds a todo and notifies the active home space.",
+    description: "Adds a todo and notifies the requested home space.",
     tags: ["todos", "business"],
     owner: "home",
     version: "0.1.0"
@@ -24,9 +24,9 @@ export const todoAdd = businessProcess<TodoAddInput, TodoAddOutput, AppServices>
 });
 
 async function todoAddHandle(ctx: ProcessContext<AppServices>, input: TodoAddInput) {
-  const activeResult = await requireActiveHomeSpace(ctx);
-  if (!activeResult.ok) return forwardFault(activeResult);
-  const activeSpace = activeResult.data!;
+  const spaceResult = await requireHomeSpace(ctx, input.spaceId);
+  if (!spaceResult.ok) return forwardFault(spaceResult);
+  const activeSpace = spaceResult.data!;
 
   await ctx.logger.info({
     message: "Adding todo.",
@@ -35,28 +35,28 @@ async function todoAddHandle(ctx: ProcessContext<AppServices>, input: TodoAddInp
     data: {
       title: input.title,
       assigneeUserId: input.assigneeUserId,
-      spaceId: activeSpace.space.id,
+      spaceId: input.spaceId,
       userId: activeSpace.user.id
     }
   });
 
-  const assignee = await ctx.services.spaces.getMembership(input.assigneeUserId, activeSpace.space.id);
+  const assignee = await ctx.services.spaces.getMembership(input.assigneeUserId, input.spaceId);
   if (!assignee) {
     await ctx.logger.warn({
-      message: "Todo assignee is not a member of the active home space.",
+      message: "Todo assignee is not a member of the requested home space.",
       process: ctx.metadata.processName,
       correlationId: ctx.metadata.correlationId,
       data: {
         assigneeUserId: input.assigneeUserId,
-        spaceId: activeSpace.space.id
+        spaceId: input.spaceId
       }
     });
 
-    return notFound("Todo assignee must be a member of the active home space. Use space_list_members to choose a valid userId.");
+    return notFound("Todo assignee must be a member of the requested home space. Use space_list_members with the same spaceId to choose a valid userId.");
   }
 
-  const todo = await ctx.services.todos.add({ ...input, spaceId: activeSpace.space.id });
-  const todos = await ctx.services.todos.list({ spaceId: activeSpace.space.id });
+  const todo = await ctx.services.todos.add(input);
+  const todos = await ctx.services.todos.list({ spaceId: input.spaceId });
   const recipients = assignee.userId === activeSpace.user.id ? [] : [assignee];
 
   ctx.services.email.sendSpaceChangeNotificationAsync(
@@ -71,7 +71,7 @@ async function todoAddHandle(ctx: ProcessContext<AppServices>, input: TodoAddInp
     correlationId: ctx.metadata.correlationId,
     data: {
       id: todo.id,
-      spaceId: activeSpace.space.id,
+      spaceId: input.spaceId,
       assigneeUserId: todo.assigneeUserId,
       todoCount: todos.length
     }

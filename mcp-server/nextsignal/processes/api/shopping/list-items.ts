@@ -1,5 +1,5 @@
 import { apiProcess, forwardFault, requireUser, validateWith, value } from "@gotch/nextsignal";
-import { requireActiveHomeSpace } from "@/nextsignal/processes/business/context";
+import { requireHomeSpace } from "@/nextsignal/processes/business/context";
 import type { AppServices } from "@/nextsignal/services";
 import { shoppingListItemsInputSchema, type ShoppingListItemsInput } from "@/nextsignal/schemas";
 import type { ShoppingItem } from "@/nextsignal/domain/home";
@@ -15,20 +15,18 @@ export const shoppingListItemsApi = apiProcess<ShoppingListItemsInput, ShoppingI
   auth: requireUser(),
   validate: validateWith(shoppingListItemsInputSchema),
   async handle(ctx, input) {
-    const activeResult = await requireActiveHomeSpace(ctx);
-    if (!activeResult.ok) return forwardFault(activeResult);
-    const activeSpace = activeResult.data!;
+    const spaceResult = await requireHomeSpace(ctx, input.spaceId);
+    if (!spaceResult.ok) return forwardFault(spaceResult);
 
     const items = await ctx.services.shopping.listItems({
-      ...input,
-      spaceId: activeSpace.space.id
+      ...input
     });
     await ctx.logger.info({
       message: "Listed shopping items.",
       process: ctx.metadata.processName,
       correlationId: ctx.metadata.correlationId,
       data: {
-        spaceId: activeSpace.space.id,
+        spaceId: input.spaceId,
         itemCount: items.length
       }
     });

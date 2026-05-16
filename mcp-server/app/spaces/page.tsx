@@ -28,7 +28,6 @@ export default async function SpacesPage({ searchParams }: SpacesPageProps) {
     request: createWebSessionRequest(session, "nextsignal://web/spaces")
   });
   const spaces = spacesResult.ok ? spacesResult.data ?? [] : [];
-  const currentSpace = spaces.find((space) => space.isActive) ?? spaces[0];
   const toast = error
     ? { tone: "error" as const, message: error }
     : message
@@ -56,9 +55,9 @@ export default async function SpacesPage({ searchParams }: SpacesPageProps) {
           </div>
         </header>
 
-        <div className="flex min-h-[calc(100vh-8rem)] items-center py-12">
+        <div className="py-12">
           <section className="w-full" aria-label="Home space">
-            {currentSpace ? <SpaceView space={currentSpace} /> : <SpaceSetup />}
+            <SpacesDashboard spaces={spaces} />
           </section>
         </div>
       </section>
@@ -66,94 +65,126 @@ export default async function SpacesPage({ searchParams }: SpacesPageProps) {
   );
 }
 
-function SpaceSetup() {
+function SpacesDashboard({ spaces }: { spaces: SpaceSummary[] }) {
   return (
-    <div className="grid items-center gap-10 lg:grid-cols-[0.8fr_1fr]">
-      <div>
+    <div className="grid gap-10 xl:grid-cols-[0.78fr_1.22fr]">
+      <section>
         <p className="text-xs font-bold uppercase tracking-[0.3em] text-clay">Spaces</p>
-        <h1 className="mt-5 max-w-lg font-serif text-4xl leading-tight tracking-normal sm:text-5xl">
-          Start with one household.
+        <h1 className="mt-5 max-w-xl font-serif text-4xl leading-tight tracking-normal sm:text-5xl">
+          Choose where your home tools write.
         </h1>
         <p className="mt-5 max-w-md text-base leading-7 text-muted">
-          Create a space, or enter an invite code from someone at home.
+          Create or join spaces here, then use the space id from <code className="font-mono text-ink">space_list</code> when calling MCP tools.
         </p>
-      </div>
+      </section>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-3xl border border-line bg-white p-6 shadow-xl shadow-ink/5">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-sage">Create</p>
-          <h2 className="mt-3 font-serif text-3xl tracking-normal">New space</h2>
-          <form className="mt-7 grid gap-4" action={createSpaceAction}>
-            <label className="grid gap-2 text-sm font-semibold text-muted">
-              Space name
-              <input
-                className="min-h-12 rounded-2xl border border-line bg-paper px-4 text-ink outline-none focus:border-sage focus:ring-4 focus:ring-sage/10"
-                name="name"
-                required
-                maxLength={80}
-                placeholder="Home"
-              />
-            </label>
-            <button className="inline-flex min-h-12 items-center justify-center rounded-full bg-sage px-5 text-sm font-bold text-white shadow-lg shadow-sage/20 hover:bg-[#627062]" type="submit">Create</button>
-          </form>
-        </div>
-
-        <div className="rounded-3xl border border-line bg-white/70 p-6">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-sage">Join</p>
-          <h2 className="mt-3 font-serif text-3xl tracking-normal">Use code</h2>
-          <form className="mt-7 grid gap-4" action={joinSpaceAction}>
-            <label className="grid gap-2 text-sm font-semibold text-muted">
-              Invite code
-              <input
-                className="min-h-12 rounded-2xl border border-line bg-paper px-4 text-ink outline-none focus:border-sage focus:ring-4 focus:ring-sage/10"
-                name="code"
-                required
-                maxLength={32}
-                placeholder="ABCD2345"
-              />
-            </label>
-            <button className="inline-flex min-h-12 items-center justify-center rounded-full border border-line bg-paper px-5 text-sm font-bold text-ink hover:border-sage" type="submit">Join</button>
-          </form>
-        </div>
+      <div className="grid gap-8">
+        <SpaceForms />
+        <SpacesList spaces={spaces} />
       </div>
     </div>
   );
 }
 
-function SpaceView({ space }: { space: SpaceSummary }) {
+function SpaceForms() {
   return (
-    <div className="grid items-center gap-10 lg:grid-cols-[0.85fr_1fr]">
-      <section>
-        <p className="text-xs font-bold uppercase tracking-[0.3em] text-clay">Current space</p>
-        <h1 className="mt-5 max-w-xl break-words font-serif text-5xl leading-tight tracking-normal sm:text-6xl">
-          {space.name}
-        </h1>
-        <p className="mt-5 max-w-md text-base leading-7 text-muted">
-          This is the shared home state your MCP tools use for shopping and todos.
-        </p>
-      </section>
+    <div className="grid gap-4 md:grid-cols-2">
+      <div className="rounded-3xl border border-line bg-white p-6 shadow-xl shadow-ink/5">
+        <p className="text-xs font-bold uppercase tracking-[0.24em] text-sage">Create</p>
+        <h2 className="mt-3 font-serif text-3xl tracking-normal">New space</h2>
+        <form className="mt-7 grid gap-4" action={createSpaceAction}>
+          <label className="grid gap-2 text-sm font-semibold text-muted">
+            Space name
+            <input
+              className="min-h-12 rounded-2xl border border-line bg-paper px-4 text-ink outline-none focus:border-sage focus:ring-4 focus:ring-sage/10"
+              name="name"
+              required
+              maxLength={80}
+              placeholder="Home"
+            />
+          </label>
+          <button className="inline-flex min-h-12 items-center justify-center rounded-full bg-sage px-5 text-sm font-bold text-white shadow-lg shadow-sage/20 hover:bg-[#627062]" type="submit">Create</button>
+        </form>
+      </div>
 
-      <article className="relative rounded-3xl border border-line bg-white p-6 shadow-2xl shadow-ink/10 sm:p-8">
-        <p className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.26em] text-muted">
-          <span className="h-2 w-2 rounded-full bg-sage" aria-hidden="true" />
-          {space.role}
-        </p>
-        <div className="mt-8 grid gap-4">
-          <div className="rounded-2xl bg-cream px-5 py-4">
-            <p className="text-sm font-semibold text-muted">Members</p>
-            <p className="mt-1 font-serif text-3xl">{space.memberCount}</p>
-          </div>
-          <div className="rounded-2xl bg-mist px-5 py-4">
-            <p className="text-sm font-semibold text-muted">Invite code</p>
-            <p className="mt-2 text-2xl font-bold tracking-normal">{space.inviteCode}</p>
-          </div>
-          <div className="rounded-2xl bg-cream px-5 py-4">
-            <p className="text-sm font-semibold text-muted">Status</p>
-            <p className="mt-1 font-serif text-3xl italic text-sage">Active</p>
-          </div>
-        </div>
-      </article>
+      <div className="rounded-3xl border border-line bg-white/70 p-6">
+        <p className="text-xs font-bold uppercase tracking-[0.24em] text-sage">Join</p>
+        <h2 className="mt-3 font-serif text-3xl tracking-normal">Use code</h2>
+        <form className="mt-7 grid gap-4" action={joinSpaceAction}>
+          <label className="grid gap-2 text-sm font-semibold text-muted">
+            Invite code
+            <input
+              className="min-h-12 rounded-2xl border border-line bg-paper px-4 text-ink outline-none focus:border-sage focus:ring-4 focus:ring-sage/10"
+              name="code"
+              required
+              maxLength={32}
+              placeholder="ABCD2345"
+            />
+          </label>
+          <button className="inline-flex min-h-12 items-center justify-center rounded-full border border-line bg-paper px-5 text-sm font-bold text-ink hover:border-sage" type="submit">Join</button>
+        </form>
+      </div>
     </div>
+  );
+}
+
+function SpacesList({ spaces }: { spaces: SpaceSummary[] }) {
+  if (spaces.length === 0) {
+    return (
+      <div className="rounded-3xl border border-dashed border-line bg-white/60 p-6">
+        <p className="font-serif text-2xl tracking-normal">No spaces yet</p>
+        <p className="mt-2 text-sm leading-6 text-muted">Create a space or join one with an invite code.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-clay">Joined spaces</p>
+          <h2 className="mt-2 font-serif text-3xl tracking-normal">Your spaces</h2>
+        </div>
+        <p className="text-sm font-semibold text-muted">{spaces.length} total</p>
+      </div>
+
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        {spaces.map((space) => (
+          <SpaceCard key={space.id} space={space} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SpaceCard({ space }: { space: SpaceSummary }) {
+  return (
+    <article className="rounded-3xl border border-line bg-white p-6 shadow-xl shadow-ink/5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-muted">{space.role}</p>
+          <h3 className="mt-2 break-words font-serif text-3xl tracking-normal">{space.name}</h3>
+        </div>
+        <span className="shrink-0 rounded-full bg-sage px-3 py-1 text-xs font-bold text-white">
+          Available
+        </span>
+      </div>
+
+      <dl className="mt-6 grid gap-3 text-sm">
+        <div className="flex items-center justify-between gap-4 rounded-2xl bg-cream px-4 py-3">
+          <dt className="font-semibold text-muted">Members</dt>
+          <dd className="font-serif text-2xl text-ink">{space.memberCount}</dd>
+        </div>
+        <div className="grid gap-1 rounded-2xl bg-mist px-4 py-3">
+          <dt className="font-semibold text-muted">Invite code</dt>
+          <dd className="break-all text-lg font-bold tracking-normal text-ink">{space.inviteCode}</dd>
+        </div>
+        <div className="grid gap-1 rounded-2xl bg-cream px-4 py-3">
+          <dt className="font-semibold text-muted">Space id</dt>
+          <dd className="break-all font-mono text-xs text-ink">{space.id}</dd>
+        </div>
+      </dl>
+    </article>
   );
 }
 
@@ -183,7 +214,7 @@ async function createSpaceAction(formData: FormData) {
   });
 
   if (!result.ok) redirect(`/spaces?error=${encodeURIComponent(readResultError(result))}`);
-  redirect("/spaces?message=Space%20created%20and%20set%20active");
+  redirect("/spaces?message=Space%20created");
 }
 
 async function joinSpaceAction(formData: FormData) {
@@ -198,7 +229,7 @@ async function joinSpaceAction(formData: FormData) {
   });
 
   if (!result.ok) redirect(`/spaces?error=${encodeURIComponent(readResultError(result))}`);
-  redirect("/spaces?message=Space%20joined%20and%20set%20active");
+  redirect("/spaces?message=Space%20joined");
 }
 
 async function signOutAction() {

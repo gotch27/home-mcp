@@ -31,7 +31,7 @@ export async function requireHomeUser(ctx: ProcessContext<AppServices>): Promise
   }
 }
 
-export async function requireActiveHomeSpace(ctx: ProcessContext<AppServices>): Promise<Result<ActiveHomeSpace>> {
+export async function requireHomeSpace(ctx: ProcessContext<AppServices>, spaceId: string): Promise<Result<ActiveHomeSpace>> {
   const userResult = await requireHomeUser(ctx);
   if (!userResult.ok) return forwardFault(userResult);
   const user = userResult.data;
@@ -40,16 +40,28 @@ export async function requireActiveHomeSpace(ctx: ProcessContext<AppServices>): 
     return systemFail(new Error("Home user requirement returned no data."));
   }
 
-  const activeSpace = await ctx.services.spaces.getActiveForUser(user.id);
-  if (!activeSpace) {
+  const membership = await ctx.services.spaces.getMembership(user.id, spaceId);
+  if (!membership) {
     await ctx.logger.warn({
-      message: "User has no active home space.",
+      message: "User attempted to access a home space they are not a member of.",
       process: ctx.metadata.processName,
       correlationId: ctx.metadata.correlationId,
-      data: { userId: user.id }
+      data: { userId: user.id, spaceId }
     });
-    return forbidden("Create or join a home space before using this tool.");
+    return forbidden("You are not a member of that home space.");
   }
 
-  return value(activeSpace);
+  try {
+    const space = await ctx.services.spaces.getDetails(user.id, spaceId);
+    return value({ user, space, membership });
+  } catch (error) {
+    await ctx.logger.error({
+      message: "Failed to load authorized home space.",
+      process: ctx.metadata.processName,
+      correlationId: ctx.metadata.correlationId,
+      data: { userId: user.id, spaceId },
+      error
+    });
+    return systemFail(error);
+  }
 }

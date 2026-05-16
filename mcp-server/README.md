@@ -24,7 +24,7 @@ Use double underscores for nested config paths, for example `NEXTSIGNAL_DATABASE
 
 ### WorkOS AuthKit
 
-The public home page describes the MCP server. The `/spaces` page uses WorkOS AuthKit browser sessions so signed-in users can create a home space, join a space by invite code, and choose their active space. The MCP endpoint uses WorkOS-issued bearer tokens through MCP OAuth resource metadata; shopping and todo tools act against the authenticated user's active space.
+The public home page describes the MCP server. The `/spaces` page uses WorkOS AuthKit browser sessions so signed-in users can create home spaces and join spaces by invite code. The MCP endpoint uses WorkOS-issued bearer tokens through MCP OAuth resource metadata. MCP clients should call `space_list`, choose a returned `id`, then pass it as `spaceId` to `space_list_members`, shopping tools, and todo tools.
 
 Required local envs:
 
@@ -75,7 +75,7 @@ Run migrations after pulling this version:
 pnpm db:migrate
 ```
 
-The previous static `family.members` config is gone. Users are saved in `home_users` the first time an authenticated process sees their WorkOS user id. Spaces live in `home_spaces`, memberships live in `home_space_members`, and shopping/todo rows are scoped by `space_id`. Emails are sent to the other members of the active space.
+The previous static `family.members` config is gone. Users are saved in `home_users` the first time an authenticated process sees their WorkOS user id. Spaces live in `home_spaces`, memberships live in `home_space_members`, and shopping/todo rows are scoped by `space_id`. Emails are sent to the other members of the requested space. All joined spaces are available; MCP tools require an explicit `spaceId`.
 
 ## Worker
 

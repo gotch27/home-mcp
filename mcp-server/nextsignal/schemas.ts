@@ -7,13 +7,17 @@ export const healthInputSchema = z.object({}).passthrough();
 
 export type HealthInput = z.infer<typeof healthInputSchema>;
 
+export const spaceIdSchema = z.string().trim().min(1);
+
 export const todoAssigneeUserIdSchema = z.string().trim().min(1);
 
 export const ensureCurrentUserInputSchema = z.object({}).passthrough();
 
 export const spacesListInputSchema = z.object({}).passthrough();
 
-export const spacesListMembersInputSchema = z.object({}).passthrough();
+export const spacesListMembersInputSchema = z.object({
+  spaceId: spaceIdSchema
+});
 
 export const spacesCreateInputSchema = z.object({
   name: z.string().trim().min(1).max(80)
@@ -23,11 +27,8 @@ export const spacesJoinInputSchema = z.object({
   code: z.string().trim().min(4).max(32)
 });
 
-export const spacesSelectInputSchema = z.object({
-  spaceId: z.string().min(1)
-});
-
 export const shoppingListItemsInputSchema = z.object({
+  spaceId: spaceIdSchema,
   store: z.string().min(1).optional()
 });
 
@@ -38,6 +39,7 @@ export const shoppingAddItemSchema = z.object({
 });
 
 export const shoppingAddItemInputSchema = shoppingAddItemSchema.extend({
+  spaceId: spaceIdSchema,
   name: z.string().min(1).optional(),
   items: z.array(shoppingAddItemSchema).min(1).optional()
 }).refine(
@@ -46,6 +48,7 @@ export const shoppingAddItemInputSchema = shoppingAddItemSchema.extend({
 );
 
 export const shoppingClearItemsInputSchema = z.object({
+  spaceId: spaceIdSchema,
   all: z.boolean().optional(),
   ids: z.array(z.string().min(1)).optional(),
   names: z.array(z.string().min(1)).optional(),
@@ -56,16 +59,19 @@ export const shoppingClearItemsInputSchema = z.object({
 );
 
 export const todoListInputSchema = z.object({
+  spaceId: spaceIdSchema,
   assigneeUserId: todoAssigneeUserIdSchema.optional(),
   includeCompleted: z.boolean().optional()
 });
 
 export const todoAddInputSchema = z.object({
+  spaceId: spaceIdSchema,
   title: z.string().min(1),
   assigneeUserId: todoAssigneeUserIdSchema
 });
 
 export const todoCompleteInputSchema = z.object({
+  spaceId: spaceIdSchema,
   id: z.string().min(1).optional(),
   title: z.string().min(1).optional(),
   assigneeUserId: todoAssigneeUserIdSchema.optional()
@@ -119,4 +125,3 @@ export type SpacesListInput = z.infer<typeof spacesListInputSchema>;
 export type SpacesListMembersInput = z.infer<typeof spacesListMembersInputSchema>;
 export type SpacesCreateInput = z.infer<typeof spacesCreateInputSchema>;
 export type SpacesJoinInput = z.infer<typeof spacesJoinInputSchema>;
-export type SpacesSelectInput = z.infer<typeof spacesSelectInputSchema>;

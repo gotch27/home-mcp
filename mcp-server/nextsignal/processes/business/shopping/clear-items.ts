@@ -1,6 +1,6 @@
 import { businessProcess, forwardFault, notFound, requireUser, validateWith, value } from "@gotch/nextsignal";
 import type { ProcessContext } from "@gotch/nextsignal";
-import { requireActiveHomeSpace } from "@/nextsignal/processes/business/context";
+import { requireHomeSpace } from "@/nextsignal/processes/business/context";
 import type { AppServices } from "@/nextsignal/services";
 import { shoppingClearItemsInputSchema, type ShoppingClearItemsInput } from "@/nextsignal/schemas";
 import type { ActiveHomeSpace, HomeChangeNotification, ShoppingItem } from "@/nextsignal/domain/home";
@@ -13,7 +13,7 @@ export type ShoppingClearItemsOutput = {
 export const shoppingClearItems = businessProcess<ShoppingClearItemsInput, ShoppingClearItemsOutput, AppServices>({
   name: "shopping.clearItems",
   metadata: {
-    description: "Clears shopping items by id, name, store, or all, then notifies the active home space.",
+    description: "Clears shopping items by id, name, store, or all, then notifies the requested home space.",
     tags: ["shopping", "business"],
     owner: "home",
     version: "0.1.0"
@@ -24,9 +24,9 @@ export const shoppingClearItems = businessProcess<ShoppingClearItemsInput, Shopp
 });
 
 async function shoppingClearItemsHandle(ctx: ProcessContext<AppServices>, input: ShoppingClearItemsInput) {
-  const activeResult = await requireActiveHomeSpace(ctx);
-  if (!activeResult.ok) return forwardFault(activeResult);
-  const activeSpace = activeResult.data!;
+  const spaceResult = await requireHomeSpace(ctx, input.spaceId);
+  if (!spaceResult.ok) return forwardFault(spaceResult);
+  const activeSpace = spaceResult.data!;
 
   await ctx.logger.info({
     message: "Clearing shopping items.",
@@ -37,12 +37,12 @@ async function shoppingClearItemsHandle(ctx: ProcessContext<AppServices>, input:
       idCount: input.ids?.length ?? 0,
       nameCount: input.names?.length ?? 0,
       store: input.store,
-      spaceId: activeSpace.space.id,
+      spaceId: input.spaceId,
       userId: activeSpace.user.id
     }
   });
 
-  const clearedItems = await ctx.services.shopping.clearItems({ ...input, spaceId: activeSpace.space.id });
+  const clearedItems = await ctx.services.shopping.clearItems(input);
   if (clearedItems.length === 0) {
     await ctx.logger.warn({
       message: "No shopping items matched clear request.",
@@ -53,16 +53,16 @@ async function shoppingClearItemsHandle(ctx: ProcessContext<AppServices>, input:
         idCount: input.ids?.length ?? 0,
         nameCount: input.names?.length ?? 0,
         store: input.store,
-        spaceId: activeSpace.space.id
+        spaceId: input.spaceId
       }
     });
 
     return notFound("No shopping items matched the clear request.");
   }
 
-  const items = await ctx.services.shopping.listItems({ spaceId: activeSpace.space.id });
+  const items = await ctx.services.shopping.listItems({ spaceId: input.spaceId });
   const recipients = await ctx.services.spaces.listNotificationMembers({
-    spaceId: activeSpace.space.id,
+    spaceId: input.spaceId,
     excludeUserId: activeSpace.user.id
   });
   ctx.services.email.sendSpaceChangeNotificationAsync(
@@ -78,7 +78,7 @@ async function shoppingClearItemsHandle(ctx: ProcessContext<AppServices>, input:
     data: {
       clearedCount: clearedItems.length,
       itemCount: items.length,
-      spaceId: activeSpace.space.id
+      spaceId: input.spaceId
     }
   });
 

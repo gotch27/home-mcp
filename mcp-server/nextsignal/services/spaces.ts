@@ -1,8 +1,7 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { homeSpaceMembers, homeSpaces, homeUsers } from "@/nextsignal/db/schema";
-import type { ActiveHomeSpace, HomeSpace, HomeSpaceMember } from "@/nextsignal/domain/home";
+import type { HomeSpace, HomeSpaceMember } from "@/nextsignal/domain/home";
 import { getDb } from "@/nextsignal/services/database";
-import { usersService } from "@/nextsignal/services/users";
 
 export type SpaceSummary = HomeSpace & {
   role: HomeSpaceMember["role"];
@@ -36,7 +35,6 @@ export const spacesService = {
       userId: input.userId,
       role: "owner"
     });
-    await usersService.setActiveSpace(input.userId, id);
 
     return this.getDetails(input.userId, id);
   },
@@ -60,22 +58,12 @@ export const spacesService = {
         role: "member"
       })
       .onConflictDoNothing();
-    await usersService.setActiveSpace(input.userId, space.id);
 
     return this.getDetails(input.userId, space.id);
   },
 
-  async select(input: { userId: string; spaceId: string }): Promise<SpaceDetails | null> {
-    const membership = await this.getMembership(input.userId, input.spaceId);
-    if (!membership) return null;
-
-    await usersService.setActiveSpace(input.userId, input.spaceId);
-    return this.getDetails(input.userId, input.spaceId);
-  },
-
   async listForUser(userId: string): Promise<SpaceSummary[]> {
     const db = await getDb();
-    const user = await usersService.get(userId);
     const rows = await db
       .select({
         space: homeSpaces,
@@ -93,7 +81,7 @@ export const spacesService = {
       ...mapHomeSpace(row.space),
       role: row.member.role,
       memberCount: memberCounts.get(row.space.id) ?? 1,
-      isActive: user?.activeSpaceId === row.space.id
+      isActive: true
     }));
   },
 
@@ -107,36 +95,6 @@ export const spacesService = {
     return {
       ...space,
       members: await this.listMembers(spaceId)
-    };
-  },
-
-  async getActiveForUser(userId: string): Promise<ActiveHomeSpace | null> {
-    const user = await usersService.get(userId);
-    if (!user) return null;
-
-    const activeMembership = user.activeSpaceId
-      ? await this.getMembership(userId, user.activeSpaceId)
-      : null;
-    const membership = activeMembership ?? await this.getFirstMembership(userId);
-    if (!membership) return null;
-
-    const activeUser = user.activeSpaceId === membership.spaceId
-      ? user
-      : await usersService.setActiveSpace(userId, membership.spaceId);
-
-    const db = await getDb();
-    const [space] = await db
-      .select()
-      .from(homeSpaces)
-      .where(eq(homeSpaces.id, membership.spaceId))
-      .limit(1);
-
-    if (!space) return null;
-
-    return {
-      user: activeUser,
-      space: mapHomeSpace(space),
-      membership
     };
   },
 
@@ -170,22 +128,6 @@ export const spacesService = {
       .from(homeSpaceMembers)
       .innerJoin(homeUsers, eq(homeUsers.id, homeSpaceMembers.userId))
       .where(and(eq(homeSpaceMembers.userId, userId), eq(homeSpaceMembers.spaceId, spaceId)))
-      .limit(1);
-
-    return row ? mapHomeSpaceMember(row.member, row.user) : null;
-  },
-
-  async getFirstMembership(userId: string): Promise<HomeSpaceMember | null> {
-    const db = await getDb();
-    const [row] = await db
-      .select({
-        member: homeSpaceMembers,
-        user: homeUsers
-      })
-      .from(homeSpaceMembers)
-      .innerJoin(homeUsers, eq(homeUsers.id, homeSpaceMembers.userId))
-      .where(eq(homeSpaceMembers.userId, userId))
-      .orderBy(asc(homeSpaceMembers.joinedAt))
       .limit(1);
 
     return row ? mapHomeSpaceMember(row.member, row.user) : null;

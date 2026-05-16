@@ -44,17 +44,6 @@ export const usersService = {
       .returning();
 
     return mapHomeUser(row);
-  },
-
-  async setActiveSpace(userId: string, spaceId: string): Promise<HomeUser> {
-    const db = await getDb();
-    const [row] = await db
-      .update(homeUsers)
-      .set({ activeSpaceId: spaceId, updatedAt: new Date() })
-      .where(eq(homeUsers.id, userId))
-      .returning();
-
-    return mapHomeUser(row);
   }
 };
 
