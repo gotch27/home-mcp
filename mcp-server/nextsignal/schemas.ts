@@ -19,6 +19,10 @@ export const spacesListMembersInputSchema = z.object({
   spaceId: spaceIdSchema
 });
 
+export const spacesLeaveInputSchema = z.object({
+  spaceId: spaceIdSchema
+});
+
 export const spacesCreateInputSchema = z.object({
   name: z.string().trim().min(1).max(80)
 });
@@ -123,5 +127,6 @@ export type HomeChangeNotificationInput = z.infer<typeof homeChangeNotificationS
 export type EnsureCurrentUserInput = z.infer<typeof ensureCurrentUserInputSchema>;
 export type SpacesListInput = z.infer<typeof spacesListInputSchema>;
 export type SpacesListMembersInput = z.infer<typeof spacesListMembersInputSchema>;
+export type SpacesLeaveInput = z.infer<typeof spacesLeaveInputSchema>;
 export type SpacesCreateInput = z.infer<typeof spacesCreateInputSchema>;
 export type SpacesJoinInput = z.infer<typeof spacesJoinInputSchema>;

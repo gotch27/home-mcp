@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { app } from "@/nextsignal/app";
-import type { SpacesCreateInput, SpacesJoinInput, SpacesListInput } from "@/nextsignal/schemas";
+import type { HomeSpaceMember } from "@/nextsignal/domain/home";
+import type { SpacesCreateInput, SpacesJoinInput, SpacesLeaveInput, SpacesListInput, SpacesListMembersInput } from "@/nextsignal/schemas";
 import type { SpaceSummary } from "@/nextsignal/services/spaces";
 import { createWebSessionRequest } from "@/nextsignal/workos/request-context";
 import {
@@ -16,6 +17,11 @@ type SpacesPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+type SpaceCardView = SpaceSummary & {
+  members: HomeSpaceMember[];
+  membersError?: string;
+};
+
 export default async function SpacesPage({ searchParams }: SpacesPageProps) {
   const session = await requirePageSession();
   const params = await searchParams;
@@ -27,7 +33,7 @@ export default async function SpacesPage({ searchParams }: SpacesPageProps) {
     runtime: "api",
     request: createWebSessionRequest(session, "nextsignal://web/spaces")
   });
-  const spaces = spacesResult.ok ? spacesResult.data ?? [] : [];
+  const spaces = spacesResult.ok ? await loadSpaceCards(session, spacesResult.data ?? []) : [];
   const toast = error
     ? { tone: "error" as const, message: error }
     : message
@@ -65,7 +71,7 @@ export default async function SpacesPage({ searchParams }: SpacesPageProps) {
   );
 }
 
-function SpacesDashboard({ spaces }: { spaces: SpaceSummary[] }) {
+function SpacesDashboard({ spaces }: { spaces: SpaceCardView[] }) {
   return (
     <div className="grid gap-10 xl:grid-cols-[0.78fr_1.22fr]">
       <section>
@@ -128,7 +134,7 @@ function SpaceForms() {
   );
 }
 
-function SpacesList({ spaces }: { spaces: SpaceSummary[] }) {
+function SpacesList({ spaces }: { spaces: SpaceCardView[] }) {
   if (spaces.length === 0) {
     return (
       <div className="rounded-3xl border border-dashed border-line bg-white/60 p-6">
@@ -157,7 +163,7 @@ function SpacesList({ spaces }: { spaces: SpaceSummary[] }) {
   );
 }
 
-function SpaceCard({ space }: { space: SpaceSummary }) {
+function SpaceCard({ space }: { space: SpaceCardView }) {
   return (
     <article className="rounded-3xl border border-line bg-white p-6 shadow-xl shadow-ink/5">
       <div className="flex items-start justify-between gap-4">
@@ -165,15 +171,48 @@ function SpaceCard({ space }: { space: SpaceSummary }) {
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-muted">{space.role}</p>
           <h3 className="mt-2 break-words font-serif text-3xl tracking-normal">{space.name}</h3>
         </div>
-        <span className="shrink-0 rounded-full bg-sage px-3 py-1 text-xs font-bold text-white">
-          Available
-        </span>
+        <details className="group relative shrink-0">
+          <summary
+            className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-full border border-line bg-paper text-lg font-bold leading-none text-ink hover:border-sage [&::-webkit-details-marker]:hidden"
+            aria-label={`Actions for ${space.name}`}
+          >
+            ...
+          </summary>
+          <div className="absolute right-0 z-10 mt-2 min-w-40 rounded-2xl border border-line bg-white p-2 shadow-xl shadow-ink/10">
+            <form action={leaveSpaceAction}>
+              <input type="hidden" name="spaceId" value={space.id} />
+              <button className="w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-danger hover:bg-cream" type="submit">
+                Leave space
+              </button>
+            </form>
+          </div>
+        </details>
       </div>
 
       <dl className="mt-6 grid gap-3 text-sm">
         <div className="flex items-center justify-between gap-4 rounded-2xl bg-cream px-4 py-3">
           <dt className="font-semibold text-muted">Members</dt>
           <dd className="font-serif text-2xl text-ink">{space.memberCount}</dd>
+        </div>
+        <div className="grid gap-3 rounded-2xl bg-white px-4 py-3 ring-1 ring-line">
+          <dt className="font-semibold text-muted">Space members</dt>
+          <dd>
+            {space.membersError ? (
+              <p className="text-sm text-danger">{space.membersError}</p>
+            ) : (
+              <ul className="grid gap-2">
+                {space.members.map((member) => (
+                  <li className="flex items-center justify-between gap-3" key={member.userId}>
+                    <span className="min-w-0">
+                      <span className="block truncate font-bold text-ink">{member.displayName || member.email}</span>
+                      <span className="block truncate text-xs text-muted">{member.email}</span>
+                    </span>
+                    <span className="shrink-0 rounded-full bg-mist px-2 py-1 text-xs font-bold text-muted">{member.role}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </dd>
         </div>
         <div className="grid gap-1 rounded-2xl bg-mist px-4 py-3">
           <dt className="font-semibold text-muted">Invite code</dt>
@@ -200,6 +239,21 @@ function Toast({ tone, message }: { tone: "success" | "error"; message: string }
       <p className="text-sm leading-6 text-muted">{message}</p>
     </div>
   );
+}
+
+async function loadSpaceCards(session: WebAuthSession, spaces: SpaceSummary[]): Promise<SpaceCardView[]> {
+  return Promise.all(spaces.map(async (space) => {
+    const result = await app.dispatch<SpacesListMembersInput, HomeSpaceMember[]>("spaces.listMembers", { spaceId: space.id }, {
+      runtime: "api",
+      request: createWebSessionRequest(session, `nextsignal://web/spaces/${space.id}/members`)
+    });
+
+    return {
+      ...space,
+      members: result.ok ? result.data ?? [] : [],
+      membersError: result.ok ? undefined : readResultError(result)
+    };
+  }));
 }
 
 async function createSpaceAction(formData: FormData) {
@@ -230,6 +284,21 @@ async function joinSpaceAction(formData: FormData) {
 
   if (!result.ok) redirect(`/spaces?error=${encodeURIComponent(readResultError(result))}`);
   redirect("/spaces?message=Space%20joined");
+}
+
+async function leaveSpaceAction(formData: FormData) {
+  "use server";
+  const session = await requirePageSession();
+  const input: SpacesLeaveInput = {
+    spaceId: String(formData.get("spaceId") ?? "")
+  };
+  const result = await app.dispatch<SpacesLeaveInput>("spaces.leave", input, {
+    runtime: "api",
+    request: createWebSessionRequest(session, "nextsignal://web/spaces/leave")
+  });
+
+  if (!result.ok) redirect(`/spaces?error=${encodeURIComponent(readResultError(result))}`);
+  redirect("/spaces?message=Space%20left");
 }
 
 async function signOutAction() {
