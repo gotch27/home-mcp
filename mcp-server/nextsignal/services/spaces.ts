@@ -1,5 +1,5 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
-import { homeSpaceMembers, homeSpaces, homeUsers } from "@/nextsignal/db/schema";
+import { homeShoppingItems, homeSpaceMembers, homeSpaces, homeTodos, homeUsers } from "@/nextsignal/db/schema";
 import type { HomeSpace, HomeSpaceMember } from "@/nextsignal/domain/home";
 import { getDb } from "@/nextsignal/services/database";
 
@@ -11,6 +11,12 @@ export type SpaceSummary = HomeSpace & {
 
 export type SpaceDetails = SpaceSummary & {
   members: HomeSpaceMember[];
+};
+
+export type LeaveSpaceResult = {
+  spaceId: string;
+  remainingMemberCount: number;
+  deletedSpace: boolean;
 };
 
 export const spacesService = {
@@ -116,6 +122,61 @@ export const spacesService = {
   async listNotificationMembers(input: { spaceId: string; excludeUserId: string }): Promise<HomeSpaceMember[]> {
     const members = await this.listMembers(input.spaceId);
     return members.filter((member) => member.userId !== input.excludeUserId && member.email);
+  },
+
+  async leave(input: { userId: string; spaceId: string }): Promise<LeaveSpaceResult> {
+    const db = await getDb();
+
+    return db.transaction(async (tx) => {
+      await tx
+        .delete(homeSpaceMembers)
+        .where(and(eq(homeSpaceMembers.userId, input.userId), eq(homeSpaceMembers.spaceId, input.spaceId)));
+
+      await tx
+        .update(homeUsers)
+        .set({ activeSpaceId: null, updatedAt: new Date() })
+        .where(and(eq(homeUsers.id, input.userId), eq(homeUsers.activeSpaceId, input.spaceId)));
+
+      const remainingMembers = await tx
+        .select({ userId: homeSpaceMembers.userId, role: homeSpaceMembers.role })
+        .from(homeSpaceMembers)
+        .where(eq(homeSpaceMembers.spaceId, input.spaceId))
+        .orderBy(asc(homeSpaceMembers.joinedAt));
+      const remainingMemberCount = remainingMembers.length;
+
+      if (remainingMemberCount > 0) {
+        const hasOwner = remainingMembers.some((member) => member.role === "owner");
+        if (!hasOwner) {
+          await tx
+            .update(homeSpaceMembers)
+            .set({ role: "owner" })
+            .where(and(
+              eq(homeSpaceMembers.spaceId, input.spaceId),
+              eq(homeSpaceMembers.userId, remainingMembers[0].userId)
+            ));
+        }
+
+        return {
+          spaceId: input.spaceId,
+          remainingMemberCount,
+          deletedSpace: false
+        };
+      }
+
+      await tx.delete(homeShoppingItems).where(eq(homeShoppingItems.spaceId, input.spaceId));
+      await tx.delete(homeTodos).where(eq(homeTodos.spaceId, input.spaceId));
+      await tx
+        .update(homeUsers)
+        .set({ activeSpaceId: null, updatedAt: new Date() })
+        .where(eq(homeUsers.activeSpaceId, input.spaceId));
+      await tx.delete(homeSpaces).where(eq(homeSpaces.id, input.spaceId));
+
+      return {
+        spaceId: input.spaceId,
+        remainingMemberCount,
+        deletedSpace: true
+      };
+    });
   },
 
   async getMembership(userId: string, spaceId: string): Promise<HomeSpaceMember | null> {
