@@ -32,6 +32,17 @@ export type ClearShoppingItemsInput = {
   store?: string;
 };
 
+export type UpdateShoppingItemsInput = {
+  spaceId: string;
+  itemIds: string[];
+  targetSpaceId?: string;
+  updates?: Array<{
+    id: string;
+    quantity?: string;
+    store?: string | null;
+  }>;
+};
+
 export const shoppingService = {
   async listItems(input: ListShoppingItemsInput): Promise<ShoppingItem[]> {
     const db = await getDb();
@@ -91,6 +102,59 @@ export const shoppingService = {
       .returning();
 
     return rows.map(mapShoppingItem);
+  },
+
+  async updateItems(input: UpdateShoppingItemsInput): Promise<ShoppingItem[] | null> {
+    const db = await getDb();
+    const itemIds = [...new Set(input.itemIds)];
+    const targetSpaceId = input.targetSpaceId ?? input.spaceId;
+
+    return db.transaction(async (tx) => {
+      const existingItems = await tx
+        .select({ id: homeShoppingItems.id })
+        .from(homeShoppingItems)
+        .where(and(
+          eq(homeShoppingItems.spaceId, input.spaceId),
+          inArray(homeShoppingItems.id, itemIds)
+        ));
+
+      if (existingItems.length !== itemIds.length) return null;
+
+      if (targetSpaceId !== input.spaceId) {
+        await tx
+          .update(homeShoppingItems)
+          .set({ spaceId: targetSpaceId })
+          .where(and(
+            eq(homeShoppingItems.spaceId, input.spaceId),
+            inArray(homeShoppingItems.id, itemIds)
+          ));
+      }
+
+      for (const update of input.updates ?? []) {
+        const values: Partial<typeof homeShoppingItems.$inferInsert> = {};
+        if (update.quantity !== undefined) values.quantity = update.quantity.trim();
+        if (update.store !== undefined) values.store = normalizeOptionalText(update.store ?? undefined) ?? null;
+
+        await tx
+          .update(homeShoppingItems)
+          .set(values)
+          .where(and(
+            eq(homeShoppingItems.spaceId, targetSpaceId),
+            eq(homeShoppingItems.id, update.id)
+          ));
+      }
+
+      const rows = await tx
+        .select()
+        .from(homeShoppingItems)
+        .where(and(
+          eq(homeShoppingItems.spaceId, targetSpaceId),
+          inArray(homeShoppingItems.id, itemIds)
+        ))
+        .orderBy(asc(homeShoppingItems.createdAt));
+
+      return rows.map(mapShoppingItem);
+    });
   }
 };
 

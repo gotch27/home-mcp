@@ -6,6 +6,7 @@ import { todoListApi } from "@/nextsignal/processes/api/todos/list";
 import { healthBusiness } from "@/nextsignal/processes/business/health";
 import { shoppingAddItem } from "@/nextsignal/processes/business/shopping/add-item";
 import { shoppingClearItems } from "@/nextsignal/processes/business/shopping/clear-items";
+import { shoppingUpdateItems } from "@/nextsignal/processes/business/shopping/update-items";
 import { spacesCreate } from "@/nextsignal/processes/business/spaces/create";
 import { spacesJoin } from "@/nextsignal/processes/business/spaces/join";
 import { spacesLeave } from "@/nextsignal/processes/business/spaces/leave";
@@ -35,6 +36,7 @@ export const processes = [
   spacesLeave,
   shoppingAddItem,
   shoppingClearItems,
+  shoppingUpdateItems,
   todoAdd,
   todoComplete
 ];
