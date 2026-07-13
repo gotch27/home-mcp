@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { useApp, useHostStyles } from "@modelcontextprotocol/ext-apps/react";
 import type { McpUiToolResultNotification } from "@modelcontextprotocol/ext-apps";
@@ -14,6 +14,7 @@ type ShoppingItem = {
 
 type ShoppingView = {
   view: "added" | "list";
+  status?: "draft" | "saved";
   spaceId: string;
   spaces: Array<{ id: string; name: string }>;
   items: ShoppingItem[];
@@ -217,6 +218,23 @@ const styles = `
     box-shadow: 0 8px 20px rgba(180,67,61,.19);
   }
   .clear-button:disabled { background: rgba(110,125,112,.17); color: var(--muted); box-shadow: none; cursor: default; }
+  .action-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 102px;
+    min-height: 42px;
+    border: 0;
+    border-radius: 13px;
+    background: var(--accent);
+    color: #fff;
+    padding: 0 19px;
+    cursor: pointer;
+    font-weight: 780;
+    box-shadow: 0 8px 20px rgba(56,125,82,.2);
+  }
+  .action-button:hover:not(:disabled) { background: var(--accent-strong); }
+  .action-button:disabled { background: rgba(110,125,112,.17); color: var(--muted); box-shadow: none; cursor: default; }
 
   .empty { padding: 34px 20px 40px; text-align: center; }
   .empty-mark { display: grid; width: 58px; height: 58px; margin: 0 auto 13px; place-items: center; border-radius: 19px; background: var(--accent-soft); color: var(--accent-strong); }
@@ -252,23 +270,34 @@ const styles = `
     .item > .stepper { justify-self: stretch; grid-template-columns: 38px 1fr 38px; }
     .list-item { grid-template-columns: auto minmax(0, 1fr) auto; }
     .footer { align-items: stretch; flex-direction: column; }
-    .clear-button { width: 100%; }
+    .clear-button, .action-button { width: 100%; }
   }
 `;
 
 function ShoppingApp() {
   const [view, setView] = useState<ShoppingView | null>(null);
+  const [savedBaseline, setSavedBaseline] = useState<ShoppingView | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pending, setPending] = useState<Set<string>>(new Set());
+  const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  const applyServerView = useCallback((nextView: ShoppingView) => {
+    setView(nextView);
+    if (nextView.view === "added") {
+      setSavedBaseline(nextView.status === "saved" ? nextView : null);
+    } else {
+      setSavedBaseline(null);
+      setSelected(new Set());
+    }
+    setActionError(null);
+  }, []);
 
   const receiveResult = useCallback((result: McpUiToolResultNotification["params"]) => {
     const nextView = parseShoppingView(result.structuredContent);
     if (!nextView) return;
-    setView(nextView);
-    if (nextView.view === "list") setSelected(new Set());
-    setActionError(null);
-  }, []);
+    applyServerView(nextView);
+  }, [applyServerView]);
 
   const { app, isConnected, error: connectionError } = useApp({
     appInfo: { name: "home-shopping", version: "1.0.0" },
@@ -286,63 +315,60 @@ function ShoppingApp() {
     if (result.isError) throw new Error(readToolError(result.content));
 
     const nextView = parseShoppingView(result.structuredContent);
-    if (nextView) setView(nextView);
+    if (nextView) applyServerView(nextView);
     return nextView;
-  }, [app]);
+  }, [app, applyServerView]);
 
-  const updateItem = useCallback(async (
-    item: ShoppingItem,
+  const updateItem = useCallback((
+    itemId: string,
     change: { quantity?: string; store?: string | null }
   ) => {
+    setActionError(null);
+    setView((current) => current?.view === "added"
+      ? { ...current, items: current.items.map((item) => item.id === itemId ? { ...item, ...change } : item) }
+      : current);
+  }, []);
+
+  const moveItems = useCallback((targetSpaceId: string) => {
+    setActionError(null);
+    setView((current) => current?.view === "added"
+      ? { ...current, spaceId: targetSpaceId, items: current.items.map((item) => ({ ...item, spaceId: targetSpaceId })) }
+      : current);
+  }, []);
+
+  const saveItems = useCallback(async () => {
     if (!view || view.view !== "added") return;
     setActionError(null);
-    setPending((current) => new Set(current).add(item.id));
-    setView({
-      ...view,
-      items: view.items.map((current) => current.id === item.id ? { ...current, ...change } : current)
-    });
-
+    setSaving(true);
     try {
-      await callTool("shopping_ui_update_items", {
-        spaceId: view.spaceId,
-        itemIds: view.items.map((current) => current.id),
-        updates: [{ id: item.id, ...change }]
-      });
+      if (view.status === "draft") {
+        await callTool("shopping_ui_add_items", {
+          spaceId: view.spaceId,
+          items: view.items.map((item) => ({
+            name: item.name,
+            quantity: item.quantity,
+            ...(item.store?.trim() ? { store: item.store.trim() } : {})
+          }))
+        });
+      } else if (savedBaseline?.view === "added") {
+        const updates = view.items.flatMap((item) => {
+          const savedItem = savedBaseline.items.find((candidate) => candidate.id === item.id);
+          if (!savedItem || (savedItem.quantity === item.quantity && savedItem.store === normalizedStore(item.store))) return [];
+          return [{ id: item.id, quantity: item.quantity, store: normalizedStore(item.store) }];
+        });
+        await callTool("shopping_ui_update_items", {
+          spaceId: savedBaseline.spaceId,
+          itemIds: savedBaseline.items.map((item) => item.id),
+          ...(view.spaceId !== savedBaseline.spaceId ? { targetSpaceId: view.spaceId } : {}),
+          ...(updates.length ? { updates } : {})
+        });
+      }
     } catch (error) {
-      setView((current) => current?.view === "added"
-        ? { ...current, items: current.items.map((currentItem) => currentItem.id === item.id ? item : currentItem) }
-        : current);
       setActionError(errorMessage(error));
     } finally {
-      setPending((current) => {
-        const next = new Set(current);
-        next.delete(item.id);
-        return next;
-      });
+      setSaving(false);
     }
-  }, [callTool, view]);
-
-  const moveItems = useCallback(async (targetSpaceId: string) => {
-    if (!view || view.view !== "added" || targetSpaceId === view.spaceId) return;
-    const previous = view;
-    const allIds = view.items.map((item) => item.id);
-    setActionError(null);
-    setPending(new Set(allIds));
-    setView({ ...view, spaceId: targetSpaceId, items: view.items.map((item) => ({ ...item, spaceId: targetSpaceId })) });
-
-    try {
-      await callTool("shopping_ui_update_items", {
-        spaceId: previous.spaceId,
-        targetSpaceId,
-        itemIds: allIds
-      });
-    } catch (error) {
-      setView(previous);
-      setActionError(errorMessage(error));
-    } finally {
-      setPending(new Set());
-    }
-  }, [callTool, view]);
+  }, [callTool, savedBaseline, view]);
 
   const clearSelected = useCallback(async () => {
     if (!view || view.view !== "list" || selected.size === 0) return;
@@ -359,6 +385,10 @@ function ShoppingApp() {
     }
   }, [callTool, selected, view]);
 
+  const dirty = view?.view === "added" && view.status === "saved" && savedBaseline?.view === "added"
+    ? editableSnapshot(view) !== editableSnapshot(savedBaseline)
+    : false;
+
   return (
     <>
       <style>{styles}</style>
@@ -374,9 +404,11 @@ function ShoppingApp() {
           ) : view.view === "added" ? (
             <AddedItems
               view={view}
-              pending={pending}
+              busy={saving}
+              dirty={dirty}
               onMove={moveItems}
               onUpdate={updateItem}
+              onSave={saveItems}
             />
           ) : (
             <ShoppingList
@@ -400,25 +432,34 @@ function ShoppingApp() {
 
 function AddedItems({
   view,
-  pending,
+  busy,
+  dirty,
   onMove,
-  onUpdate
+  onUpdate,
+  onSave
 }: {
   view: ShoppingView;
-  pending: Set<string>;
+  busy: boolean;
+  dirty: boolean;
   onMove: (spaceId: string) => void;
-  onUpdate: (item: ShoppingItem, change: { quantity?: string; store?: string | null }) => void;
+  onUpdate: (itemId: string, change: { quantity?: string; store?: string | null }) => void;
+  onSave: () => void;
 }) {
-  const busy = pending.size > 0;
+  const isDraft = view.status === "draft";
+  const itemCount = view.items.length;
 
   return (
     <>
       <header className="header">
         <div className="eyebrow"><span className="eyebrow-mark"><BagIcon /></span> Shopping list</div>
-        <h1>{view.items.length === 1 ? "Item added" : `${view.items.length} items added`}</h1>
-        <p className="subhead">Fine-tune the quantities and where you want to pick each item up.</p>
+        <h1>{isDraft
+          ? itemCount === 1 ? "Review this item" : `Review ${itemCount} items`
+          : itemCount === 1 ? "Item added" : `${itemCount} items added`}</h1>
+        <p className="subhead">{isDraft
+          ? "Check the quantities and stores. Nothing is added until you confirm."
+          : "Make any changes, then update the saved items in one go."}</p>
         <div className="space-control">
-          <label htmlFor="space">Save all in</label>
+          <label htmlFor="space">{isDraft ? "Add all to" : "Save all in"}</label>
           <select id="space" value={view.spaceId} disabled={busy} onChange={(event) => onMove(event.target.value)}>
             {view.spaces.map((space) => <option key={space.id} value={space.id}>{space.name}</option>)}
           </select>
@@ -427,7 +468,7 @@ function AddedItems({
       <div className="content">
         <div className="items">
           {view.items.map((item) => (
-            <article className={`item ${pending.has(item.id) ? "pending" : ""}`} key={item.id}>
+            <article className={`item ${busy ? "pending" : ""}`} key={item.id}>
               <div>
                 <div className="item-name">{item.name}</div>
                 <div className="item-meta">
@@ -436,19 +477,27 @@ function AddedItems({
                     value={item.store ?? ""}
                     stores={view.stores}
                     disabled={busy}
-                    onCommit={(store) => onUpdate(item, { store: store || null })}
+                    onChange={(store) => onUpdate(item.id, { store: store || null })}
                   />
                 </div>
               </div>
               <QuantityStepper
                 value={item.quantity}
                 disabled={busy}
-                onChange={(quantity) => onUpdate(item, { quantity })}
+                onChange={(quantity) => onUpdate(item.id, { quantity })}
               />
             </article>
           ))}
         </div>
       </div>
+      <footer className="footer">
+        <span className="selection-copy">{isDraft
+          ? "Ready when you are"
+          : dirty ? "Unsaved changes" : "Everything is up to date"}</span>
+        <button type="button" className="action-button" disabled={busy || (!isDraft && !dirty)} onClick={onSave}>
+          {busy ? "Saving…" : isDraft ? "Add" : "Update"}
+        </button>
+      </footer>
     </>
   );
 }
@@ -458,17 +507,15 @@ function StoreField({
   value,
   stores,
   disabled,
-  onCommit
+  onChange
 }: {
   itemId: string;
   value: string;
   stores: string[];
   disabled: boolean;
-  onCommit: (value: string) => void;
+  onChange: (value: string) => void;
 }) {
-  const [draft, setDraft] = useState(value);
   const listId = `stores-${itemId}`;
-  useEffect(() => setDraft(value), [value]);
 
   return (
     <div className="store-wrap">
@@ -477,17 +524,10 @@ function StoreField({
         className="store-input"
         aria-label="Place to buy"
         list={listId}
-        value={draft}
+        value={value}
         disabled={disabled}
         placeholder="Any store"
-        onChange={(event) => setDraft(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") event.currentTarget.blur();
-        }}
-        onBlur={() => {
-          const next = draft.trim();
-          if (next !== value) onCommit(next);
-        }}
+        onChange={(event) => onChange(event.target.value)}
       />
       <datalist id={listId}>
         {stores.map((store) => <option value={store} key={store} />)}
@@ -603,7 +643,24 @@ function parseShoppingView(value: unknown): ShoppingView | null {
   const candidate = value as Partial<ShoppingView>;
   if ((candidate.view !== "added" && candidate.view !== "list") || typeof candidate.spaceId !== "string") return null;
   if (!Array.isArray(candidate.items) || !Array.isArray(candidate.spaces) || !Array.isArray(candidate.stores)) return null;
+  if (candidate.view === "added" && candidate.status !== "draft" && candidate.status !== "saved") return null;
   return candidate as ShoppingView;
+}
+
+function normalizedStore(store: string | null) {
+  return store?.trim() || null;
+}
+
+function editableSnapshot(view: ShoppingView) {
+  return JSON.stringify({
+    spaceId: view.spaceId,
+    items: view.items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      quantity: item.quantity,
+      store: normalizedStore(item.store)
+    }))
+  });
 }
 
 function readToolError(content: Array<{ type: string; text?: string }>) {

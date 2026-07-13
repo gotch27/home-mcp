@@ -55,9 +55,9 @@ The app uses this value as the canonical public origin for AuthKit redirects and
 
 The shopping tools use the portable MCP Apps extension, so the same embedded UI can render in ChatGPT and Claude:
 
-- `shopping_add_item` renders the newly added items with quantity steppers, a shared space picker, and a store field for each item.
+- `shopping_add_item` prepares a read-only draft and renders it with quantity steppers, a shared space picker, and a store field for each item. Nothing is persisted until the user clicks **Add**.
 - `shopping_list_items` renders a selectable list with a button to clear the selected items.
-- `shopping_ui_update_items` and `shopping_ui_clear_items` are marked with MCP Apps `visibility: ["app"]`, so compatible hosts expose them to the embedded UI but not to the model.
+- `shopping_ui_add_items`, `shopping_ui_update_items`, and `shopping_ui_clear_items` are marked with MCP Apps `visibility: ["app"]`, so compatible hosts expose them to the embedded UI but not to the model. Once added, edits remain local until the user clicks **Update**.
 
 The UI source is `nextsignal/mcp/ui/shopping-app.tsx`. `npm run dev`, `npm run build`, and `npm run check` bundle it into a self-contained HTML resource automatically. Run `npm run mcp-ui:build` directly when you only want to regenerate that resource.
 

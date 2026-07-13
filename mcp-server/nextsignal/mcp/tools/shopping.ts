@@ -8,6 +8,7 @@ import { SHOPPING_APP_URI } from "@/nextsignal/mcp/ui/shopping-resource";
 import type { ShoppingAddItemOutput } from "@/nextsignal/processes/business/shopping/add-item";
 import type { ShoppingClearItemsOutput } from "@/nextsignal/processes/business/shopping/clear-items";
 import type { ShoppingUpdateItemsOutput } from "@/nextsignal/processes/business/shopping/update-items";
+import type { ShoppingPreviewAddOutput } from "@/nextsignal/processes/api/shopping/preview-add";
 import type { ShoppingItem } from "@/nextsignal/domain/home";
 import type { SpaceSummary } from "@/nextsignal/services/spaces";
 import type {
@@ -55,8 +56,8 @@ export const shoppingTools: NextSignalMcpTool[] = [
         server,
         "shopping_add_item",
         {
-          title: "Add Shopping Item",
-          description: "Adds one or more items to the requested home space shopping list and emails other space members once.",
+          title: "Review Shopping Items",
+          description: "Prepares one or more shopping items for review in an interactive confirmation UI. This does not add anything until the user clicks Add in the UI.",
           inputSchema: {
             spaceId: spaceIdSchema,
             name: z.string().min(1).optional(),
@@ -64,12 +65,36 @@ export const shoppingTools: NextSignalMcpTool[] = [
             store: z.string().min(1).optional(),
             items: z.array(z.object(shoppingAddItemSchema)).min(1).optional()
           },
-          annotations: { readOnlyHint: false, destructiveHint: false },
+          annotations: { readOnlyHint: true, destructiveHint: false },
           _meta: {
             ui: { resourceUri: SHOPPING_APP_URI }
           }
         },
-        async (input, extra) => addShoppingItems(context, input, extra)
+        async (input, extra) => previewShoppingItems(context, input, extra)
+      );
+    }
+  },
+  {
+    register(server, context) {
+      registerAppTool(
+        server,
+        "shopping_ui_add_items",
+        {
+          title: "Add Confirmed Shopping Items from UI",
+          description: "Adds shopping items only after the user confirms the draft in the interactive shopping UI.",
+          inputSchema: {
+            spaceId: spaceIdSchema,
+            items: z.array(z.object(shoppingAddItemSchema)).min(1)
+          },
+          annotations: { readOnlyHint: false, destructiveHint: false },
+          _meta: {
+            ui: {
+              resourceUri: SHOPPING_APP_URI,
+              visibility: ["app"]
+            }
+          }
+        },
+        async (input, extra) => addShoppingItemsFromUi(context, input, extra)
       );
     }
   },
@@ -153,6 +178,7 @@ type ToolExtra = Parameters<typeof dispatchMcpTool>[3];
 
 type ShoppingView = {
   view: "added" | "list";
+  status?: "draft" | "saved";
   spaceId: string;
   spaces: Array<{ id: string; name: string }>;
   items: ShoppingItem[];
@@ -180,20 +206,43 @@ async function listShoppingItems(
   });
 }
 
-async function addShoppingItems(
+async function previewShoppingItems(
   { app }: NextSignalMcpToolContext,
   input: ShoppingAddItemInput,
   extra: ToolExtra
 ): Promise<CallToolResult> {
-  const result = await dispatchMcpTool<ShoppingAddItemInput>(app, "shopping.addItem", input, extra);
+  const result = await dispatchMcpTool<ShoppingAddItemInput>(app, "shopping.previewAdd", input, extra);
   if (!result.ok) return toMcpToolResult(result);
 
   const spaces = await listSpaces(app, extra);
   if (!spaces.ok) return spaces.error;
 
+  const data = result.data as ShoppingPreviewAddOutput;
+  return shoppingViewResult({
+    view: "added",
+    status: "draft",
+    spaceId: input.spaceId,
+    spaces: spaces.value,
+    items: data.proposedItems,
+    stores: distinctStores(data.items)
+  });
+}
+
+async function addShoppingItemsFromUi(
+  { app }: NextSignalMcpToolContext,
+  input: ShoppingAddItemInput,
+  extra: ToolExtra
+): Promise<CallToolResult> {
+  const spaces = await listSpaces(app, extra);
+  if (!spaces.ok) return spaces.error;
+
+  const result = await dispatchMcpTool<ShoppingAddItemInput>(app, "shopping.addItem", input, extra);
+  if (!result.ok) return toMcpToolResult(result);
+
   const data = result.data as ShoppingAddItemOutput;
   return shoppingViewResult({
     view: "added",
+    status: "saved",
     spaceId: input.spaceId,
     spaces: spaces.value,
     items: data.addedItems,
@@ -206,23 +255,20 @@ async function updateShoppingItems(
   input: ShoppingUpdateItemsInput,
   extra: ToolExtra
 ): Promise<CallToolResult> {
+  const spaces = await listSpaces(app, extra);
+  if (!spaces.ok) return spaces.error;
+
   const result = await dispatchMcpTool<ShoppingUpdateItemsInput>(app, "shopping.updateItems", input, extra);
   if (!result.ok) return toMcpToolResult(result);
 
   const data = result.data as ShoppingUpdateItemsOutput;
-  const [spaces, listResult] = await Promise.all([
-    listSpaces(app, extra),
-    dispatchMcpTool<ShoppingListItemsInput>(app, "shopping.listItems", { spaceId: data.spaceId }, extra)
-  ]);
-  if (!spaces.ok) return spaces.error;
-  if (!listResult.ok) return toMcpToolResult(listResult);
-
   return shoppingViewResult({
     view: "added",
+    status: "saved",
     spaceId: data.spaceId,
     spaces: spaces.value,
     items: data.items,
-    stores: distinctStores((listResult.data ?? []) as ShoppingItem[])
+    stores: distinctStores(data.items)
   });
 }
 
@@ -231,11 +277,11 @@ async function clearShoppingItemsFromUi(
   input: { spaceId: string; ids: string[] },
   extra: ToolExtra
 ): Promise<CallToolResult> {
-  const result = await dispatchMcpTool<ShoppingClearItemsInput>(app, "shopping.clearItems", input, extra);
-  if (!result.ok) return toMcpToolResult(result);
-
   const spaces = await listSpaces(app, extra);
   if (!spaces.ok) return spaces.error;
+
+  const result = await dispatchMcpTool<ShoppingClearItemsInput>(app, "shopping.clearItems", input, extra);
+  if (!result.ok) return toMcpToolResult(result);
 
   const data = result.data as ShoppingClearItemsOutput;
   return shoppingViewResult({
@@ -268,14 +314,16 @@ async function listSpaces(
 
 function shoppingViewResult(view: ShoppingView): CallToolResult {
   const spaceName = view.spaces.find((space) => space.id === view.spaceId)?.name ?? "space";
-  const verb = view.view === "added" ? "Added" : "Found";
+  const message = view.view === "added" && view.status === "draft"
+    ? `Prepared ${view.items.length} proposed shopping item${view.items.length === 1 ? "" : "s"} for ${spaceName}. Nothing has been added yet; review the widget and click Add to confirm.`
+    : `${view.view === "added" ? "Saved" : "Found"} ${view.items.length} shopping item${view.items.length === 1 ? "" : "s"} in ${spaceName}.`;
 
   return {
     structuredContent: view,
     content: [
       {
         type: "text",
-        text: `${verb} ${view.items.length} shopping item${view.items.length === 1 ? "" : "s"} in ${spaceName}.\n${JSON.stringify(view.items, null, 2)}`
+        text: `${message}\n${JSON.stringify(view.items, null, 2)}`
       }
     ]
   };
