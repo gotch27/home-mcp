@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
+import { McpPhotoCarousel } from "./mcp-photo-carousel";
 import {
   decryptWebSession,
   getSignOutUrl,
@@ -54,7 +55,7 @@ export default async function HomePage() {
             <div className="editorial-trust"><span>Private by design</span><span>Made for real households</span></div>
           </section>
 
-          <VideoPlaceholder />
+          <McpPhotoCarousel />
         </div>
       </section>
 
@@ -76,19 +77,6 @@ export default async function HomePage() {
         </div>
       </section>
     </main>
-  );
-}
-
-function VideoPlaceholder() {
-  return (
-    <section className="editorial-video" aria-label="Portrait product video placeholder">
-      <div className="editorial-video-top"><span>Portrait video</span><span>9:16 / 01:24</span></div>
-      <div className="editorial-video-art">
-        <div className="editorial-room-card"><span>Today</span><strong>6 things<br />handled</strong></div>
-        <button className="editorial-play" type="button" aria-label="Play demo video"><span aria-hidden="true">▶</span></button>
-        <p>See a shared home space come together.</p>
-      </div>
-    </section>
   );
 }
 

@@ -46,15 +46,23 @@
 .editorial-secondary { background: transparent; }
 .editorial-trust { display: flex; gap: 28px; margin-top: 38px; color: #777b75; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
 .editorial-trust span::before { color: var(--editorial-orange); content: "●"; margin-right: 8px; }
-.editorial-video { width: min(100%, 420px); justify-self: center; overflow: hidden; border: 1px solid #2d302d; background: #e4ddd0; box-shadow: 18px 18px 0 var(--editorial-moss); }
-.editorial-video-top { display: flex; justify-content: space-between; padding: 15px 18px; border-bottom: 1px solid #2d302d; background: #fffaf0; font-size: 10px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
-.editorial-video-art { position: relative; aspect-ratio: 9 / 16; overflow: hidden; background: radial-gradient(circle at 72% 24%, #f7b566 0 8%, transparent 8.3%), linear-gradient(135deg, transparent 0 48%, rgba(255,255,255,.38) 48.2% 49%, transparent 49.2%), linear-gradient(150deg, #c6d0b5 0 46%, #6f8a71 46% 64%, #31483a 64%); }
-.editorial-video-art::after { position: absolute; inset: 18px; border: 1px solid rgba(255,255,255,.7); content: ""; }
-.editorial-room-card { position: absolute; top: 35px; left: 35px; z-index: 1; padding: 16px 18px; background: rgba(255,250,240,.9); box-shadow: 6px 6px 0 rgba(23,26,24,.85); }
-.editorial-room-card span { display: block; margin-bottom: 8px; font-size: 9px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
-.editorial-room-card strong { font-family: Georgia, serif; font-size: 24px; font-weight: 400; line-height: 1.05; }
-.editorial-play { position: absolute; top: 50%; left: 50%; z-index: 2; display: grid; width: 78px; height: 78px; place-items: center; border: 0; border-radius: 50%; background: var(--editorial-orange); color: white; cursor: pointer; box-shadow: 0 18px 40px rgba(38,45,37,.28); transform: translate(-50%,-50%); }
-.editorial-video-art > p { position: absolute; right: 28px; bottom: 24px; left: 28px; z-index: 1; margin: 0; color: white; font-family: Georgia, serif; font-size: clamp(18px, 2.3vw, 30px); text-shadow: 0 2px 14px rgba(0,0,0,.3); }
+.editorial-carousel { width: min(100%, 420px); justify-self: center; overflow: hidden; border: 1px solid #2d302d; background: #fffaf0; box-shadow: 18px 18px 0 var(--editorial-moss); }
+.editorial-carousel-top { display: flex; justify-content: space-between; padding: 15px 18px; border-bottom: 1px solid #2d302d; font-size: 10px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
+.editorial-carousel-track { display: flex; aspect-ratio: 9 / 16; overflow-x: auto; overscroll-behavior-x: contain; scroll-behavior: smooth; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.editorial-carousel-track::-webkit-scrollbar { display: none; }
+.editorial-carousel-slide { position: relative; width: 100%; min-width: 100%; height: 100%; margin: 0; overflow: hidden; background: #e4ddd0; scroll-snap-align: start; scroll-snap-stop: always; }
+.editorial-carousel-slide::after { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 63%, rgba(15,18,16,.06) 72%, rgba(15,18,16,.58)); content: ""; pointer-events: none; }
+.editorial-carousel-slide img { object-fit: cover; object-position: top center; }
+.editorial-carousel-slide figcaption { position: absolute; right: 24px; bottom: 27px; left: 24px; z-index: 1; padding: 15px 18px 16px; background: var(--editorial-orange); color: white; font-family: Georgia, "Times New Roman", serif; font-size: clamp(19px, 2.1vw, 26px); line-height: 1.08; box-shadow: 7px 7px 0 rgba(23,26,24,.92); transform: rotate(-1.2deg); }
+.editorial-carousel-slide:nth-child(even) figcaption { background: var(--editorial-moss); transform: rotate(1.1deg); }
+.editorial-carousel-controls { display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; border-top: 1px solid #2d302d; }
+.editorial-carousel-controls > button { display: grid; width: 48px; height: 46px; place-items: center; border: 0; background: transparent; color: var(--editorial-ink); cursor: pointer; font-size: 21px; }
+.editorial-carousel-controls > button:last-child { border-left: 1px solid #cbc5b9; }
+.editorial-carousel-controls > button:first-child { border-right: 1px solid #cbc5b9; }
+.editorial-carousel-controls > button:hover, .editorial-carousel-controls > button:focus-visible { background: var(--editorial-ink); color: white; }
+.editorial-carousel-dots { display: flex; align-items: center; justify-content: center; gap: 9px; }
+.editorial-carousel-dots button { width: 7px; height: 7px; border: 0; border-radius: 50%; background: #aaa99f; padding: 0; cursor: pointer; transition: width .2s ease, border-radius .2s ease, background .2s ease; }
+.editorial-carousel-dots button.active { width: 23px; border-radius: 10px; background: var(--editorial-orange); }
 .editorial-how { display: grid; grid-template-columns: .75fr 1.25fr; gap: 8vw; padding: 100px clamp(22px, 5vw, 72px); background: var(--editorial-ink); color: white; }
 .editorial-how-heading h2 { margin: 18px 0 0; font-size: clamp(42px, 5vw, 72px); line-height: .98; letter-spacing: -.045em; }
 .editorial-steps { border-top: 1px solid #545753; }
@@ -128,7 +136,7 @@
   .editorial-hero-grid, .editorial-dashboard { grid-template-columns: 1fr; }
   .editorial-hero-grid { padding-top: 90px; }
   .editorial-copy { max-width: 760px; }
-  .editorial-video { max-width: 760px; }
+  .editorial-carousel { max-width: 420px; }
   .editorial-dashboard-intro { position: static; }
   .editorial-how { grid-template-columns: 1fr; }
 }
@@ -140,7 +148,8 @@
   .editorial-user { display:none; }
   .editorial-copy h1 { font-size: 55px; }
   .editorial-trust { flex-direction: column; gap: 9px; }
-  .editorial-video { box-shadow: 9px 9px 0 var(--editorial-moss); }
+  .editorial-carousel { box-shadow: 9px 9px 0 var(--editorial-moss); }
+  .editorial-carousel-slide figcaption { right: 18px; bottom: 22px; left: 18px; }
   .editorial-how { padding: 70px 22px; }
   .editorial-step { grid-template-columns: 35px 1fr; }
   .editorial-step div { grid-column: 2; }
