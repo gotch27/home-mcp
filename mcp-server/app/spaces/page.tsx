@@ -80,7 +80,6 @@ function SpacesDashboard({ spaces }: { spaces: SpaceCardView[] }) {
         <p>
           Create or join spaces here, then use the space id from <code className="font-mono text-ink">space_list</code> when calling MCP tools.
         </p>
-        <SpacesGuideVideo />
       </aside>
 
       <div className="editorial-dashboard-content">
@@ -231,15 +230,6 @@ function Toast({ tone, message }: { tone: "success" | "error"; message: string }
     >
       <span>{tone === "error" ? "Could not update" : "Done"}</span>
       <p>{message}</p>
-    </div>
-  );
-}
-
-function SpacesGuideVideo() {
-  return (
-    <div className="editorial-guide-video" aria-label="Portrait space setup video placeholder">
-      <button type="button" aria-label="Play space setup guide">▶</button>
-      <div><strong>Space setup guide</strong><span>Portrait · 9:16 · 01:08</span></div>
     </div>
   );
 }
