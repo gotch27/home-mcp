@@ -237,9 +237,9 @@ function Toast({ tone, message }: { tone: "success" | "error"; message: string }
 
 function SpacesGuideVideo() {
   return (
-    <div className="editorial-guide-video" aria-label="Space setup video placeholder">
+    <div className="editorial-guide-video" aria-label="Portrait space setup video placeholder">
       <button type="button" aria-label="Play space setup guide">▶</button>
-      <div><strong>Space setup guide</strong><span>Watch · 01:08</span></div>
+      <div><strong>Space setup guide</strong><span>Portrait · 9:16 · 01:08</span></div>
     </div>
   );
 }

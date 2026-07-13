@@ -81,8 +81,8 @@ export default async function HomePage() {
 
 function VideoPlaceholder() {
   return (
-    <section className="editorial-video" aria-label="Product video placeholder">
-      <div className="editorial-video-top"><span>Interactive product tour</span><span>01:24</span></div>
+    <section className="editorial-video" aria-label="Portrait product video placeholder">
+      <div className="editorial-video-top"><span>Portrait product tour</span><span>9:16 / 01:24</span></div>
       <div className="editorial-video-art">
         <div className="editorial-room-card"><span>Today</span><strong>6 things<br />handled</strong></div>
         <button className="editorial-play" type="button" aria-label="Play demo video"><span aria-hidden="true">▶</span></button>
