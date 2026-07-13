@@ -39,13 +39,13 @@ export default async function HomePage() {
 
         <div className="editorial-hero-grid">
           <section className="editorial-copy">
-            <p className="editorial-kicker">A calmer way to coordinate home</p>
+            <p className="editorial-kicker">Your home operating system</p>
             <h1>
-              Home life,
-              <span>beautifully in sync.</span>
+              Less admin.
+              <span>More living.</span>
             </h1>
             <p className="editorial-lede">
-              One private command center for the lists, todos, and small details that keep a household moving—available to everyone and every AI assistant you trust.
+              Bring people, lists, and trusted AI into one beautifully simple place. Your household stays current without the constant catch-up.
             </p>
             <div className="editorial-actions">
               <a className="editorial-primary" href="/spaces">{primaryLabel}<span aria-hidden="true">↗</span></a>
@@ -61,7 +61,7 @@ export default async function HomePage() {
       <section className="editorial-how">
         <div className="editorial-how-heading">
           <p className="editorial-kicker">How it works</p>
-          <h2>Set it up once.<br />Share the flow.</h2>
+          <h2>One space.<br />Everyone current.</h2>
         </div>
         <div className="editorial-steps">
             <Step number="01" title="Create a space">
@@ -82,11 +82,11 @@ export default async function HomePage() {
 function VideoPlaceholder() {
   return (
     <section className="editorial-video" aria-label="Product video placeholder">
-      <div className="editorial-video-top"><span>Home, in motion</span><span>01:24</span></div>
+      <div className="editorial-video-top"><span>Interactive product tour</span><span>01:24</span></div>
       <div className="editorial-video-art">
         <div className="editorial-room-card"><span>Today</span><strong>6 things<br />handled</strong></div>
         <button className="editorial-play" type="button" aria-label="Play demo video"><span aria-hidden="true">▶</span></button>
-        <p>See a shared home space come together.</p>
+        <p>See how Home MCP clears the mental clutter.</p>
       </div>
     </section>
   );
