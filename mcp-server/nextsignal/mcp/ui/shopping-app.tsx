@@ -272,6 +272,157 @@ const styles = `
     .footer { align-items: stretch; flex-direction: column; }
     .clear-button, .action-button { width: 100%; }
   }
+
+  /* Prototype 03: playful pantry receipt */
+  :root {
+    color-scheme: light;
+    --app-bg: #fffdf5;
+    --card-bg: #fffdf5;
+    --text: #151515;
+    --muted: #66645d;
+    --line: #171717;
+    --accent: #4e59e8;
+    --accent-strong: #2733c8;
+    --accent-soft: #dfe1ff;
+    --danger: #e64428;
+    --danger-soft: #ffddd5;
+    --shadow: 10px 12px 0 #151515;
+    font-family: "Courier New", Courier, monospace;
+  }
+  body {
+    background:
+      radial-gradient(circle, rgba(20,20,20,.13) 1px, transparent 1.5px) 0 0 / 19px 19px,
+      #ffd64d;
+  }
+  .shell { max-width: 720px; padding: 22px; }
+  .panel {
+    overflow: visible;
+    border: 3px solid #151515;
+    border-radius: 0;
+    background: var(--app-bg);
+    box-shadow: var(--shadow);
+  }
+  .header {
+    position: relative;
+    padding: 28px 28px 22px;
+    border-bottom: 3px dashed #151515;
+  }
+  .header::before {
+    position: absolute;
+    top: -18px;
+    right: 24px;
+    padding: 8px 12px;
+    border: 2px solid #151515;
+    background: #ff6f4e;
+    box-shadow: 3px 3px 0 #151515;
+    content: "PANTRY TV";
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    transform: rotate(3deg);
+  }
+  .eyebrow { color: #151515; font-size: 11px; letter-spacing: .13em; }
+  .eyebrow-mark { border: 2px solid #151515; border-radius: 0; background: #7de0b1; color: #151515; box-shadow: 2px 2px 0 #151515; transform: rotate(-4deg); }
+  h1 { font-size: clamp(34px, 8vw, 58px); font-weight: 900; line-height: .96; letter-spacing: -.08em; text-transform: uppercase; }
+  .subhead { max-width: 560px; color: #45433d; }
+  .video-placeholder {
+    position: relative;
+    display: grid;
+    min-height: 240px;
+    margin-top: 22px;
+    overflow: hidden;
+    place-items: center;
+    border: 3px solid #151515;
+    background:
+      linear-gradient(120deg, transparent 49%, #151515 50% 51%, transparent 52%),
+      linear-gradient(35deg, #ff6f4e 0 35%, #7de0b1 36% 64%, #7d85ff 65%);
+    box-shadow: 5px 5px 0 #151515;
+  }
+  .video-placeholder::after {
+    position: absolute;
+    inset: 10px;
+    border: 2px dashed rgba(21,21,21,.7);
+    content: "";
+  }
+  .play-button {
+    z-index: 1;
+    display: grid;
+    width: 72px;
+    height: 58px;
+    place-items: center;
+    border: 3px solid #151515;
+    border-radius: 50%;
+    background: #ffd64d;
+    color: #151515;
+    box-shadow: 4px 4px 0 #151515;
+    transform: rotate(-3deg);
+  }
+  .video-caption {
+    position: absolute;
+    right: 14px;
+    bottom: 12px;
+    z-index: 1;
+    padding: 6px 9px;
+    border: 2px solid #151515;
+    background: #fffdf5;
+    color: #151515;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    transform: rotate(2deg);
+  }
+  .space-control {
+    border: 2px solid #151515;
+    border-radius: 0;
+    background: #dfe1ff;
+    box-shadow: 3px 3px 0 #151515;
+  }
+  .content { padding: 20px 24px 24px; }
+  .list-toolbar { border-bottom: 2px solid #151515; }
+  .item {
+    border: 2px solid #151515;
+    border-radius: 0;
+    background: #fffdf5;
+    box-shadow: 3px 3px 0 #151515;
+  }
+  .item:nth-child(3n + 1) { background: #edf9d7; }
+  .item:nth-child(3n + 2) { background: #fff1bd; }
+  .item:nth-child(3n) { background: #f0e9ff; }
+  .item-name { font-size: 15px; font-weight: 900; text-transform: uppercase; }
+  .store-input { border: 1px solid #151515; border-radius: 0; background: #fffdf5; }
+  .stepper { border: 2px solid #151515; border-radius: 0; background: #fff; }
+  .stepper button { color: #151515; font-weight: 900; }
+  .qty-badge { border: 2px solid #151515; border-radius: 50%; background: #ffd64d; }
+  .check { border: 2px solid #151515; border-radius: 0; background: #fff; }
+  .check.selected { border-color: #151515; background: #4e59e8; box-shadow: 2px 2px 0 #151515; }
+  .footer { border-top: 3px dashed #151515; background: #7de0b1; }
+  .selection-copy { color: #151515; font-weight: 800; text-transform: uppercase; }
+  .action-button, .clear-button {
+    min-height: 46px;
+    border: 2px solid #151515;
+    border-radius: 0;
+    box-shadow: 4px 4px 0 #151515;
+    text-transform: uppercase;
+  }
+  .action-button { background: #4e59e8; }
+  .clear-button { background: #ff6f4e; }
+  .action-button:disabled, .clear-button:disabled { border-color: #777; box-shadow: none; }
+  .empty-mark { border: 2px solid #151515; border-radius: 50%; background: #7de0b1; color: #151515; box-shadow: 3px 3px 0 #151515; }
+
+  @media (prefers-color-scheme: dark) {
+    :root { color-scheme: light; --app-bg: #fffdf5; --card-bg: #fffdf5; --text: #151515; --muted: #66645d; --line: #171717; --accent: #4e59e8; --accent-strong: #2733c8; --accent-soft: #dfe1ff; }
+  }
+  @media (max-width: 520px) {
+    .shell { padding: 10px; }
+    .panel { box-shadow: 5px 6px 0 #151515; }
+    .header { padding: 25px 17px 18px; }
+    .header::before { right: 12px; }
+    .video-placeholder { min-height: 170px; }
+    .content { padding: 16px; }
+    .item { grid-template-columns: minmax(0, 1fr); }
+    .list-item { grid-template-columns: auto minmax(0, 1fr) auto; }
+    .footer { padding: 14px 17px 18px; }
+  }
 `;
 
 function ShoppingApp() {
@@ -458,6 +609,7 @@ function AddedItems({
         <p className="subhead">{isDraft
           ? "Check the quantities and stores. Nothing is added until you confirm."
           : "Make any changes, then update the saved items in one go."}</p>
+        <VideoPlaceholder label="Watch: the 40-second fridge check" />
         <div className="space-control">
           <label htmlFor="space">{isDraft ? "Add all to" : "Save all in"}</label>
           <select id="space" value={view.spaceId} disabled={busy} onChange={(event) => onMove(event.target.value)}>
@@ -574,6 +726,7 @@ function ShoppingList({
         <div className="eyebrow"><span className="eyebrow-mark"><BagIcon /></span> {spaceName}</div>
         <h1>Shopping list</h1>
         <p className="subhead">Select what’s already in the basket, then clear it in one go.</p>
+        <VideoPlaceholder label="Watch: this week’s pantry plan" />
       </header>
       <div className="content">
         {view.items.length === 0 ? (
@@ -685,6 +838,19 @@ function CheckIcon() {
 
 function TrashIcon() {
   return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7"/></svg>;
+}
+
+function VideoPlaceholder({ label }: { label: string }) {
+  return (
+    <div className="video-placeholder" role="img" aria-label={`Video placeholder: ${label}`}>
+      <span className="play-button"><PlayIcon /></span>
+      <span className="video-caption">{label}</span>
+    </div>
+  );
+}
+
+function PlayIcon() {
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z" /></svg>;
 }
 
 const root = document.getElementById("root");
