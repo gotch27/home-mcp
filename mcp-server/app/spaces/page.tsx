@@ -76,7 +76,7 @@ function SpacesDashboard({ spaces }: { spaces: SpaceCardView[] }) {
     <div className="editorial-dashboard">
       <aside className="editorial-dashboard-intro">
         <p className="editorial-kicker">Your spaces</p>
-        <h1>Make room for everyone.</h1>
+        <h1>Spaces for the people who live here.</h1>
         <p>
           Create or join spaces here, then use the space id from <code className="font-mono text-ink">space_list</code> when calling MCP tools.
         </p>
