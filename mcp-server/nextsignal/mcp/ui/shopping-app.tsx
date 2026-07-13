@@ -272,6 +272,133 @@ const styles = `
     .footer { align-items: stretch; flex-direction: column; }
     .clear-button, .action-button { width: 100%; }
   }
+
+  /* Prototype 02: midnight neon command center */
+  :root {
+    color-scheme: dark;
+    --app-bg: #0a0d16;
+    --card-bg: #121726;
+    --text: #f4f5ff;
+    --muted: #9199b3;
+    --line: rgba(174, 185, 226, .16);
+    --accent: #b9ff3f;
+    --accent-strong: #d1ff7b;
+    --accent-soft: rgba(185,255,63,.12);
+    --danger: #ff5277;
+    --danger-soft: rgba(255,82,119,.13);
+    --shadow: 0 28px 80px rgba(0,0,0,.55);
+    font-family: "Space Grotesk", "Avenir Next", var(--font-sans, ui-sans-serif, sans-serif);
+  }
+  body {
+    background:
+      linear-gradient(rgba(119,139,210,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(119,139,210,.06) 1px, transparent 1px),
+      radial-gradient(circle at 30% 0%, #232b58 0, #090b13 48%);
+    background-size: 28px 28px, 28px 28px, auto;
+  }
+  .shell { max-width: 840px; padding: 16px; }
+  .panel {
+    border-color: rgba(181,197,255,.2);
+    border-radius: 28px;
+    background: rgba(9,12,21,.92);
+    box-shadow: var(--shadow), inset 0 1px rgba(255,255,255,.05);
+    backdrop-filter: blur(20px);
+  }
+  .header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, .82fr);
+    column-gap: 24px;
+    padding: 28px;
+  }
+  .eyebrow, h1, .subhead, .space-control { grid-column: 1; }
+  .eyebrow { align-self: end; color: var(--accent); }
+  .eyebrow-mark { border: 1px solid rgba(185,255,63,.3); border-radius: 9px; background: var(--accent-soft); }
+  h1 {
+    align-self: center;
+    font-size: clamp(38px, 7vw, 60px);
+    font-weight: 730;
+    line-height: .94;
+    letter-spacing: -.065em;
+    text-wrap: balance;
+  }
+  .subhead { max-width: 430px; font-size: 13px; }
+  .space-control {
+    border-color: rgba(185,255,63,.22);
+    background: rgba(185,255,63,.06);
+  }
+  .video-placeholder {
+    position: relative;
+    grid-column: 2;
+    grid-row: 1 / span 4;
+    min-height: 260px;
+    overflow: hidden;
+    border: 1px solid rgba(148,167,255,.25);
+    border-radius: 19px;
+    background:
+      radial-gradient(circle at 65% 25%, rgba(185,255,63,.8) 0 3%, transparent 4%),
+      linear-gradient(145deg, transparent 45%, rgba(185,255,63,.16) 46% 47%, transparent 48%),
+      radial-gradient(circle at 50% 55%, #313d80, #14182e 60%, #0a0d16);
+    box-shadow: inset 0 0 60px rgba(62,83,173,.35);
+  }
+  .video-placeholder::after {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,255,255,.025) 4px);
+    content: "";
+    pointer-events: none;
+  }
+  .video-topline { position: absolute; top: 15px; left: 16px; color: #dce2ff; font-size: 9px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+  .video-topline::before { display: inline-block; width: 6px; height: 6px; margin-right: 7px; border-radius: 50%; background: #ff5277; box-shadow: 0 0 12px #ff5277; content: ""; }
+  .play-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 1;
+    display: grid;
+    width: 64px;
+    height: 64px;
+    place-items: center;
+    border: 1px solid var(--accent);
+    border-radius: 18px;
+    background: rgba(185,255,63,.12);
+    color: var(--accent);
+    box-shadow: 0 0 32px rgba(185,255,63,.18);
+    transform: translate(-50%, -50%);
+  }
+  .video-label { position: absolute; right: 16px; bottom: 15px; left: 16px; display: flex; justify-content: space-between; color: #c6cdea; font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
+  .content { padding: 0 18px 18px; }
+  .items { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .item {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: space-between;
+    min-height: 128px;
+    border-color: rgba(160,174,225,.14);
+    border-radius: 17px;
+    background: linear-gradient(145deg, rgba(28,35,59,.96), rgba(15,19,32,.96));
+    box-shadow: inset 0 1px rgba(255,255,255,.035);
+  }
+  .item > .stepper { width: 100%; grid-template-columns: 40px 1fr 40px; }
+  .item-name { font-size: 16px; }
+  .store-input, .stepper, .qty-badge { background: rgba(160,174,225,.08); }
+  .list-toolbar { grid-column: 1 / -1; }
+  .list-item { grid-template-columns: auto minmax(0, 1fr) auto; min-height: 92px; }
+  .check { border-color: #64709b; border-radius: 8px; }
+  .check.selected { color: #080b13; box-shadow: 0 0 18px rgba(185,255,63,.3); }
+  .footer { border-top-color: var(--line); background: #0d111d; }
+  .action-button { border: 1px solid rgba(185,255,63,.45); background: var(--accent); color: #0a0d16; box-shadow: 0 0 24px rgba(185,255,63,.18); }
+  .action-button:hover:not(:disabled) { background: var(--accent-strong); }
+  .clear-button { background: transparent; color: var(--danger); border: 1px solid rgba(255,82,119,.45); box-shadow: none; }
+
+  @media (prefers-color-scheme: light) {
+    :root { color-scheme: dark; --app-bg: #0a0d16; --card-bg: #121726; --text: #f4f5ff; --muted: #9199b3; --line: rgba(174,185,226,.16); --accent: #b9ff3f; --accent-strong: #d1ff7b; --accent-soft: rgba(185,255,63,.12); }
+  }
+  @media (max-width: 650px) {
+    .header { display: block; padding: 22px; }
+    .video-placeholder { min-height: 190px; margin-top: 20px; }
+    .items { grid-template-columns: 1fr; }
+    .item { min-height: auto; }
+    .list-item { min-height: 86px; }
+  }
 `;
 
 function ShoppingApp() {
@@ -458,6 +585,7 @@ function AddedItems({
         <p className="subhead">{isDraft
           ? "Check the quantities and stores. Nothing is added until you confirm."
           : "Make any changes, then update the saved items in one go."}</p>
+        <VideoPlaceholder label="Cart scan" duration="00:42" />
         <div className="space-control">
           <label htmlFor="space">{isDraft ? "Add all to" : "Save all in"}</label>
           <select id="space" value={view.spaceId} disabled={busy} onChange={(event) => onMove(event.target.value)}>
@@ -574,6 +702,7 @@ function ShoppingList({
         <div className="eyebrow"><span className="eyebrow-mark"><BagIcon /></span> {spaceName}</div>
         <h1>Shopping list</h1>
         <p className="subhead">Select what’s already in the basket, then clear it in one go.</p>
+        <VideoPlaceholder label="Weekly briefing" duration="01:12" />
       </header>
       <div className="content">
         {view.items.length === 0 ? (
@@ -685,6 +814,20 @@ function CheckIcon() {
 
 function TrashIcon() {
   return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7"/></svg>;
+}
+
+function VideoPlaceholder({ label, duration }: { label: string; duration: string }) {
+  return (
+    <div className="video-placeholder" role="img" aria-label={`Video placeholder: ${label}`}>
+      <span className="video-topline">Preview signal</span>
+      <span className="play-button"><PlayIcon /></span>
+      <span className="video-label"><b>{label}</b><span>{duration}</span></span>
+    </div>
+  );
+}
+
+function PlayIcon() {
+  return <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z" /></svg>;
 }
 
 const root = document.getElementById("root");
