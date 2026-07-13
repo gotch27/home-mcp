@@ -62,6 +62,40 @@ export const shoppingClearItemsInputSchema = z.object({
   { message: "Provide `all: true`, at least one id, or at least one name." }
 );
 
+export const shoppingUpdateItemSchema = z.object({
+  id: z.string().trim().min(1),
+  quantity: z.string().trim().min(1).max(40).optional(),
+  store: z.string().trim().max(120).nullable().optional()
+}).refine(
+  (input) => input.quantity !== undefined || input.store !== undefined,
+  { message: "Provide a quantity or store update." }
+);
+
+export const shoppingUpdateItemsInputSchema = z.object({
+  spaceId: spaceIdSchema,
+  itemIds: z.array(z.string().trim().min(1)).min(1),
+  targetSpaceId: spaceIdSchema.optional(),
+  updates: z.array(shoppingUpdateItemSchema).min(1).optional()
+}).superRefine((input, ctx) => {
+  if (!input.targetSpaceId && !input.updates?.length) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Provide a target space or at least one item update."
+    });
+  }
+
+  const itemIds = new Set(input.itemIds);
+  for (const update of input.updates ?? []) {
+    if (!itemIds.has(update.id)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Every updated item must also be included in itemIds."
+      });
+      break;
+    }
+  }
+});
+
 export const todoListInputSchema = z.object({
   spaceId: spaceIdSchema,
   assigneeUserId: todoAssigneeUserIdSchema.optional(),
@@ -120,6 +154,7 @@ export const homeChangeNotificationSchema = z.object({
 export type ShoppingListItemsInput = z.infer<typeof shoppingListItemsInputSchema>;
 export type ShoppingAddItemInput = z.infer<typeof shoppingAddItemInputSchema>;
 export type ShoppingClearItemsInput = z.infer<typeof shoppingClearItemsInputSchema>;
+export type ShoppingUpdateItemsInput = z.infer<typeof shoppingUpdateItemsInputSchema>;
 export type TodoListInput = z.infer<typeof todoListInputSchema>;
 export type TodoAddInput = z.infer<typeof todoAddInputSchema>;
 export type TodoCompleteInput = z.infer<typeof todoCompleteInputSchema>;

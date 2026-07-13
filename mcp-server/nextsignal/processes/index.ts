@@ -1,11 +1,13 @@
 import { healthApi } from "@/nextsignal/processes/api/health";
 import { pruneLogsApi } from "@/nextsignal/processes/api/logs/prune";
 import { shoppingListItemsApi } from "@/nextsignal/processes/api/shopping/list-items";
+import { shoppingPreviewAddApi } from "@/nextsignal/processes/api/shopping/preview-add";
 import { spacesListMembersApi } from "@/nextsignal/processes/api/spaces/list-members";
 import { todoListApi } from "@/nextsignal/processes/api/todos/list";
 import { healthBusiness } from "@/nextsignal/processes/business/health";
 import { shoppingAddItem } from "@/nextsignal/processes/business/shopping/add-item";
 import { shoppingClearItems } from "@/nextsignal/processes/business/shopping/clear-items";
+import { shoppingUpdateItems } from "@/nextsignal/processes/business/shopping/update-items";
 import { spacesCreate } from "@/nextsignal/processes/business/spaces/create";
 import { spacesJoin } from "@/nextsignal/processes/business/spaces/join";
 import { spacesLeave } from "@/nextsignal/processes/business/spaces/leave";
@@ -25,6 +27,7 @@ export const processes = [
   healthApi,
   pruneLogsApi,
   shoppingListItemsApi,
+  shoppingPreviewAddApi,
   spacesListMembersApi,
   todoListApi,
   healthBusiness,
@@ -35,6 +38,7 @@ export const processes = [
   spacesLeave,
   shoppingAddItem,
   shoppingClearItems,
+  shoppingUpdateItems,
   todoAdd,
   todoComplete
 ];
