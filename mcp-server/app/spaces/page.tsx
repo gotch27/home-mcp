@@ -43,26 +43,26 @@ export default async function SpacesPage({ searchParams }: SpacesPageProps) {
         : null;
 
   return (
-    <main className="min-h-screen bg-cream text-ink">
+    <main className="editorial editorial-spaces">
       {toast ? <Toast tone={toast.tone} message={toast.message} /> : null}
 
-      <section className="mx-auto min-h-screen w-full max-w-7xl rounded-none bg-paper px-6 py-8 sm:px-10 lg:rounded-3xl lg:px-16 lg:py-12">
-        <header className="flex items-center justify-between gap-4">
-          <a className="flex items-center gap-3 text-lg font-semibold italic" href="/">
-            <span className="h-9 w-9 rounded-full bg-sage" aria-hidden="true" />
-            <span className="font-serif">Home MCP</span>
+      <section className="editorial-spaces-shell">
+        <header className="editorial-nav editorial-spaces-nav">
+          <a className="editorial-brand" href="/">
+            <span className="editorial-brand-mark" aria-hidden="true">H</span>
+            <span>Home / MCP</span>
           </a>
-          <div className="flex flex-wrap items-center justify-end gap-3 text-sm font-semibold text-muted">
-            <a className="text-ink hover:text-sage" href="/">Home</a>
-            <span className="max-w-40 truncate">{displayName}</span>
+          <div className="editorial-nav-actions">
+            <a className="editorial-nav-link" href="/">Home</a>
+            <span className="editorial-user">{displayName}</span>
             <form action={signOutAction}>
-              <button className="text-ink hover:text-sage" type="submit">Sign out</button>
+              <button className="editorial-link-button" type="submit">Sign out</button>
             </form>
           </div>
         </header>
 
-        <div className="py-12">
-          <section className="w-full" aria-label="Home space">
+        <div className="editorial-spaces-body">
+          <section aria-label="Home space">
             <SpacesDashboard spaces={spaces} />
           </section>
         </div>
@@ -73,18 +73,17 @@ export default async function SpacesPage({ searchParams }: SpacesPageProps) {
 
 function SpacesDashboard({ spaces }: { spaces: SpaceCardView[] }) {
   return (
-    <div className="grid gap-10 xl:grid-cols-[0.78fr_1.22fr]">
-      <section>
-        <p className="text-xs font-bold uppercase tracking-[0.3em] text-clay">Spaces</p>
-        <h1 className="mt-5 max-w-xl font-serif text-4xl leading-tight tracking-normal sm:text-5xl">
-          Choose where your home tools write.
-        </h1>
-        <p className="mt-5 max-w-md text-base leading-7 text-muted">
+    <div className="editorial-dashboard">
+      <aside className="editorial-dashboard-intro">
+        <p className="editorial-kicker">Your spaces</p>
+        <h1>Make room for everyone.</h1>
+        <p>
           Create or join spaces here, then use the space id from <code className="font-mono text-ink">space_list</code> when calling MCP tools.
         </p>
-      </section>
+        <SpacesGuideVideo />
+      </aside>
 
-      <div className="grid gap-8">
+      <div className="editorial-dashboard-content">
         <SpaceForms />
         <SpacesList spaces={spaces} />
       </div>
@@ -94,40 +93,38 @@ function SpacesDashboard({ spaces }: { spaces: SpaceCardView[] }) {
 
 function SpaceForms() {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <div className="rounded-3xl border border-line bg-white p-6 shadow-xl shadow-ink/5">
-        <p className="text-xs font-bold uppercase tracking-[0.24em] text-sage">Create</p>
-        <h2 className="mt-3 font-serif text-3xl tracking-normal">New space</h2>
-        <form className="mt-7 grid gap-4" action={createSpaceAction}>
-          <label className="grid gap-2 text-sm font-semibold text-muted">
+    <div className="editorial-space-forms">
+      <div className="editorial-form-card editorial-form-primary">
+        <p className="editorial-card-index">01 / Create</p>
+        <h2>Start a new space</h2>
+        <form action={createSpaceAction}>
+          <label>
             Space name
             <input
-              className="min-h-12 rounded-2xl border border-line bg-paper px-4 text-ink outline-none focus:border-sage focus:ring-4 focus:ring-sage/10"
               name="name"
               required
               maxLength={80}
               placeholder="Home"
             />
           </label>
-          <button className="inline-flex min-h-12 items-center justify-center rounded-full bg-sage px-5 text-sm font-bold text-white shadow-lg shadow-sage/20 hover:bg-[#627062]" type="submit">Create</button>
+          <button type="submit">Create space <span aria-hidden="true">↗</span></button>
         </form>
       </div>
 
-      <div className="rounded-3xl border border-line bg-white/70 p-6">
-        <p className="text-xs font-bold uppercase tracking-[0.24em] text-sage">Join</p>
-        <h2 className="mt-3 font-serif text-3xl tracking-normal">Use code</h2>
-        <form className="mt-7 grid gap-4" action={joinSpaceAction}>
-          <label className="grid gap-2 text-sm font-semibold text-muted">
+      <div className="editorial-form-card">
+        <p className="editorial-card-index">02 / Join</p>
+        <h2>Enter an invite code</h2>
+        <form action={joinSpaceAction}>
+          <label>
             Invite code
             <input
-              className="min-h-12 rounded-2xl border border-line bg-paper px-4 text-ink outline-none focus:border-sage focus:ring-4 focus:ring-sage/10"
               name="code"
               required
               maxLength={32}
               placeholder="ABCD2345"
             />
           </label>
-          <button className="inline-flex min-h-12 items-center justify-center rounded-full border border-line bg-paper px-5 text-sm font-bold text-ink hover:border-sage" type="submit">Join</button>
+          <button type="submit">Join space <span aria-hidden="true">→</span></button>
         </form>
       </div>
     </div>
@@ -137,24 +134,24 @@ function SpaceForms() {
 function SpacesList({ spaces }: { spaces: SpaceCardView[] }) {
   if (spaces.length === 0) {
     return (
-      <div className="rounded-3xl border border-dashed border-line bg-white/60 p-6">
-        <p className="font-serif text-2xl tracking-normal">No spaces yet</p>
-        <p className="mt-2 text-sm leading-6 text-muted">Create a space or join one with an invite code.</p>
+      <div className="editorial-empty">
+        <p>No spaces yet</p>
+        <span>Create a space or join one with an invite code.</span>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="editorial-space-list">
+      <div className="editorial-list-heading">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-clay">Joined spaces</p>
-          <h2 className="mt-2 font-serif text-3xl tracking-normal">Your spaces</h2>
+          <p className="editorial-kicker">Joined spaces</p>
+          <h2>Your spaces</h2>
         </div>
-        <p className="text-sm font-semibold text-muted">{spaces.length} total</p>
+        <p>{spaces.length} total</p>
       </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+      <div className="editorial-space-grid">
         {spaces.map((space) => (
           <SpaceCard key={space.id} space={space} />
         ))}
@@ -165,23 +162,22 @@ function SpacesList({ spaces }: { spaces: SpaceCardView[] }) {
 
 function SpaceCard({ space }: { space: SpaceCardView }) {
   return (
-    <article className="rounded-3xl border border-line bg-white p-6 shadow-xl shadow-ink/5">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-muted">{space.role}</p>
-          <h3 className="mt-2 break-words font-serif text-3xl tracking-normal">{space.name}</h3>
+    <article className="editorial-space-card">
+      <div className="editorial-space-card-heading">
+        <div>
+          <p>{space.role}</p>
+          <h3>{space.name}</h3>
         </div>
-        <details className="group relative shrink-0">
+        <details className="editorial-card-menu">
           <summary
-            className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-full border border-line bg-paper text-lg font-bold leading-none text-ink hover:border-sage [&::-webkit-details-marker]:hidden"
             aria-label={`Actions for ${space.name}`}
           >
             ...
           </summary>
-          <div className="absolute right-0 z-10 mt-2 min-w-40 rounded-2xl border border-line bg-white p-2 shadow-xl shadow-ink/10">
+          <div>
             <form action={leaveSpaceAction}>
               <input type="hidden" name="spaceId" value={space.id} />
-              <button className="w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-danger hover:bg-cream" type="submit">
+              <button type="submit">
                 Leave space
               </button>
             </form>
@@ -189,38 +185,38 @@ function SpaceCard({ space }: { space: SpaceCardView }) {
         </details>
       </div>
 
-      <dl className="mt-6 grid gap-3 text-sm">
-        <div className="flex items-center justify-between gap-4 rounded-2xl bg-cream px-4 py-3">
-          <dt className="font-semibold text-muted">Members</dt>
-          <dd className="font-serif text-2xl text-ink">{space.memberCount}</dd>
+      <dl className="editorial-space-data">
+        <div className="editorial-member-count">
+          <dt>Members</dt>
+          <dd>{space.memberCount}</dd>
         </div>
-        <div className="grid gap-3 rounded-2xl bg-white px-4 py-3 ring-1 ring-line">
-          <dt className="font-semibold text-muted">Space members</dt>
+        <div className="editorial-members">
+          <dt>Space members</dt>
           <dd>
             {space.membersError ? (
-              <p className="text-sm text-danger">{space.membersError}</p>
+              <p className="editorial-error">{space.membersError}</p>
             ) : (
-              <ul className="grid gap-2">
+              <ul>
                 {space.members.map((member) => (
-                  <li className="flex items-center justify-between gap-3" key={member.userId}>
-                    <span className="min-w-0">
-                      <span className="block truncate font-bold text-ink">{member.displayName || member.email}</span>
-                      <span className="block truncate text-xs text-muted">{member.email}</span>
+                  <li key={member.userId}>
+                    <span>
+                      <strong>{member.displayName || member.email}</strong>
+                      <small>{member.email}</small>
                     </span>
-                    <span className="shrink-0 rounded-full bg-mist px-2 py-1 text-xs font-bold text-muted">{member.role}</span>
+                    <em>{member.role}</em>
                   </li>
                 ))}
               </ul>
             )}
           </dd>
         </div>
-        <div className="grid gap-1 rounded-2xl bg-mist px-4 py-3">
-          <dt className="font-semibold text-muted">Invite code</dt>
-          <dd className="break-all text-lg font-bold tracking-normal text-ink">{space.inviteCode}</dd>
+        <div className="editorial-code-row">
+          <dt>Invite code</dt>
+          <dd>{space.inviteCode}</dd>
         </div>
-        <div className="grid gap-1 rounded-2xl bg-cream px-4 py-3">
-          <dt className="font-semibold text-muted">Space id</dt>
-          <dd className="break-all font-mono text-xs text-ink">{space.id}</dd>
+        <div className="editorial-id-row">
+          <dt>Space id</dt>
+          <dd>{space.id}</dd>
         </div>
       </dl>
     </article>
@@ -228,15 +224,22 @@ function SpaceCard({ space }: { space: SpaceCardView }) {
 }
 
 function Toast({ tone, message }: { tone: "success" | "error"; message: string }) {
-  const toneClasses = tone === "error" ? "border-l-danger" : "border-l-leaf";
-
   return (
     <div
-      className={`fixed right-4 top-4 z-20 grid max-w-[min(24rem,calc(100vw-2rem))] gap-1 rounded-lg border border-line border-l-4 bg-white p-4 shadow-xl ${toneClasses}`}
+      className={`editorial-toast ${tone}`}
       role={tone === "error" ? "alert" : "status"}
     >
-      <span className="text-sm font-bold">{tone === "error" ? "Could not update" : "Done"}</span>
-      <p className="text-sm leading-6 text-muted">{message}</p>
+      <span>{tone === "error" ? "Could not update" : "Done"}</span>
+      <p>{message}</p>
+    </div>
+  );
+}
+
+function SpacesGuideVideo() {
+  return (
+    <div className="editorial-guide-video" aria-label="Space setup video placeholder">
+      <button type="button" aria-label="Play space setup guide">▶</button>
+      <div><strong>Space setup guide</strong><span>Watch · 01:08</span></div>
     </div>
   );
 }
