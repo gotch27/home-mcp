@@ -272,6 +272,124 @@ const styles = `
     .footer { align-items: stretch; flex-direction: column; }
     .clear-button, .action-button { width: 100%; }
   }
+
+  /* Prototype 01: warm editorial market */
+  :root {
+    color-scheme: light;
+    --app-bg: #f4efe4;
+    --card-bg: #fffaf0;
+    --text: #233226;
+    --muted: #6d7668;
+    --line: #d9d2c2;
+    --accent: #d4522a;
+    --accent-strong: #a83a1a;
+    --accent-soft: #f6d9c7;
+    --danger: #9e352c;
+    --danger-soft: #f8ddd5;
+    --shadow: 0 24px 70px rgba(67, 55, 31, .14);
+    font-family: Georgia, "Times New Roman", serif;
+  }
+  body {
+    background: linear-gradient(135deg, #e8dfce 0%, #f8f3e9 44%, #dedfc9 100%);
+  }
+  button, input, select, .eyebrow, .subhead, .selection-copy, .item-store, .qty-badge, .list-toolbar, .video-label {
+    font-family: var(--font-sans, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  }
+  .shell { max-width: 780px; padding: 18px; }
+  .panel {
+    border: 1px solid rgba(104, 92, 67, .24);
+    border-radius: 6px;
+    background: var(--app-bg);
+    box-shadow: var(--shadow), 9px 9px 0 #26392b;
+  }
+  .header {
+    position: relative;
+    padding: 34px 34px 22px;
+    border-bottom: 1px solid var(--line);
+  }
+  .header::after {
+    position: absolute;
+    top: 27px;
+    right: 32px;
+    content: "FRESH / LOCAL / SHARED";
+    color: #78826f;
+    font: 700 9px/1 var(--font-sans, sans-serif);
+    letter-spacing: .2em;
+  }
+  .eyebrow { color: var(--accent); letter-spacing: .15em; }
+  .eyebrow-mark { border-radius: 50%; background: #25382a; color: #fff6e8; }
+  h1 { max-width: 560px; font-size: clamp(38px, 8vw, 64px); font-weight: 500; line-height: .94; letter-spacing: -.055em; }
+  .subhead { max-width: 540px; margin-top: 14px; font-size: 14px; }
+  .space-control {
+    margin-top: 20px;
+    border: 0;
+    border-bottom: 1px solid #293c2e;
+    border-radius: 0;
+    background: transparent;
+    padding-left: 0;
+  }
+  .space-control select { color: #293c2e; }
+  .video-placeholder {
+    position: relative;
+    display: grid;
+    min-height: 190px;
+    margin-top: 24px;
+    overflow: hidden;
+    place-items: center;
+    border-radius: 3px;
+    background:
+      linear-gradient(0deg, rgba(24, 43, 28, .55), rgba(24, 43, 28, .05)),
+      radial-gradient(circle at 70% 20%, #e9aa5f 0 9%, transparent 10%),
+      linear-gradient(145deg, #9aaf73 0 42%, #4b6b45 43% 62%, #233f31 63%);
+    color: white;
+  }
+  .video-placeholder::before {
+    position: absolute;
+    inset: 12px;
+    border: 1px solid rgba(255,255,255,.55);
+    content: "";
+  }
+  .play-button {
+    z-index: 1;
+    display: grid;
+    width: 58px;
+    height: 58px;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,.75);
+    border-radius: 50%;
+    background: rgba(255,250,240,.92);
+    color: #26392b;
+    box-shadow: 0 10px 30px rgba(23,40,28,.24);
+  }
+  .video-label { position: absolute; right: 24px; bottom: 22px; font-size: 10px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
+  .content { padding: 22px 24px 24px; }
+  .items { gap: 10px; }
+  .item {
+    border-width: 0 0 1px;
+    border-radius: 0;
+    background: transparent;
+    padding: 16px 8px;
+  }
+  .item-name { font-family: Georgia, "Times New Roman", serif; font-size: 20px; font-weight: 500; }
+  .store-input, .stepper, .qty-badge { background: #e9e3d6; }
+  .store-input { border-radius: 3px; }
+  .stepper { border: 0; border-radius: 3px; }
+  .check { border-radius: 50%; }
+  .footer { padding: 18px 32px 24px; background: #ebe5d8; }
+  .action-button, .clear-button { min-height: 48px; border-radius: 2px; padding-inline: 26px; letter-spacing: .04em; text-transform: uppercase; }
+
+  @media (prefers-color-scheme: dark) {
+    :root { color-scheme: light; --app-bg: #f4efe4; --card-bg: #fffaf0; --text: #233226; --muted: #6d7668; --line: #d9d2c2; --accent: #d4522a; --accent-strong: #a83a1a; --accent-soft: #f6d9c7; }
+  }
+  @media (max-width: 560px) {
+    .shell { padding: 8px; }
+    .panel { box-shadow: 5px 5px 0 #26392b; }
+    .header { padding: 26px 20px 18px; }
+    .header::after { display: none; }
+    .video-placeholder { min-height: 150px; }
+    .content { padding: 16px; }
+    .footer { padding: 16px 20px 20px; }
+  }
 `;
 
 function ShoppingApp() {
@@ -458,6 +576,7 @@ function AddedItems({
         <p className="subhead">{isDraft
           ? "Check the quantities and stores. Nothing is added until you confirm."
           : "Make any changes, then update the saved items in one go."}</p>
+        <VideoPlaceholder label="Market notes · 00:42" />
         <div className="space-control">
           <label htmlFor="space">{isDraft ? "Add all to" : "Save all in"}</label>
           <select id="space" value={view.spaceId} disabled={busy} onChange={(event) => onMove(event.target.value)}>
@@ -574,6 +693,7 @@ function ShoppingList({
         <div className="eyebrow"><span className="eyebrow-mark"><BagIcon /></span> {spaceName}</div>
         <h1>Shopping list</h1>
         <p className="subhead">Select what’s already in the basket, then clear it in one go.</p>
+        <VideoPlaceholder label="This week’s picks · 01:12" />
       </header>
       <div className="content">
         {view.items.length === 0 ? (
@@ -685,6 +805,19 @@ function CheckIcon() {
 
 function TrashIcon() {
   return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7"/></svg>;
+}
+
+function VideoPlaceholder({ label }: { label: string }) {
+  return (
+    <div className="video-placeholder" role="img" aria-label={`Video placeholder: ${label}`}>
+      <span className="play-button"><PlayIcon /></span>
+      <span className="video-label">{label}</span>
+    </div>
+  );
+}
+
+function PlayIcon() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z" /></svg>;
 }
 
 const root = document.getElementById("root");
