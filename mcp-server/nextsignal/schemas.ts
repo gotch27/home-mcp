@@ -7,6 +7,10 @@ export const healthInputSchema = z.object({}).passthrough();
 
 export type HealthInput = z.infer<typeof healthInputSchema>;
 
+export const marketplaceNotificationSubscribeInputSchema = z.object({
+  email: z.string().trim().toLowerCase().email().max(320)
+});
+
 export const spaceIdSchema = z.string().trim().min(1);
 
 export const todoAssigneeUserIdSchema = z.string().trim().min(1);
@@ -165,3 +169,4 @@ export type SpacesListMembersInput = z.infer<typeof spacesListMembersInputSchema
 export type SpacesLeaveInput = z.infer<typeof spacesLeaveInputSchema>;
 export type SpacesCreateInput = z.infer<typeof spacesCreateInputSchema>;
 export type SpacesJoinInput = z.infer<typeof spacesJoinInputSchema>;
+export type MarketplaceNotificationSubscribeInput = z.infer<typeof marketplaceNotificationSubscribeInputSchema>;

@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { app } from "@/nextsignal/app";
 import type { HomeSpaceMember } from "@/nextsignal/domain/home";
@@ -49,8 +50,10 @@ export default async function SpacesPage({ searchParams }: SpacesPageProps) {
       <section className="editorial-spaces-shell">
         <header className="editorial-nav editorial-spaces-nav">
           <a className="editorial-brand" href="/">
-            <span className="editorial-brand-mark" aria-hidden="true">H</span>
-            <span>Home / MCP</span>
+            <span className="editorial-brand-mark" aria-hidden="true">
+              <Image src="/homespace-logo.png" alt="" width={46} height={46} priority />
+            </span>
+            <span>HomeSpace</span>
           </a>
           <div className="editorial-nav-actions">
             <a className="editorial-nav-link" href="/">Home</a>
@@ -75,10 +78,10 @@ function SpacesDashboard({ spaces }: { spaces: SpaceCardView[] }) {
   return (
     <div className="editorial-dashboard">
       <aside className="editorial-dashboard-intro">
-        <p className="editorial-kicker">Your spaces</p>
-        <h1>Make room for everyone.</h1>
+        <p className="editorial-kicker">Your shopping spaces</p>
+        <h1>A shared list for every space.</h1>
         <p>
-          Create or join spaces here, then use the space id from <code className="font-mono text-ink">space_list</code> when calling MCP tools.
+          Create or join shopping spaces here, then connect your favorite AI agent to add, check, update, and clear each shared list.
         </p>
       </aside>
 

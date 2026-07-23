@@ -1,5 +1,6 @@
 import { emailService } from "@/nextsignal/services/email";
 import { logsService } from "@/nextsignal/services/logs";
+import { marketplaceNotificationsService } from "@/nextsignal/services/marketplace-notifications";
 import { shoppingService } from "@/nextsignal/services/shopping";
 import { spacesService } from "@/nextsignal/services/spaces";
 import { todosService } from "@/nextsignal/services/todos";
@@ -33,7 +34,8 @@ export const services = {
   users: usersService,
   workos: workosService,
   email: emailService,
-  logs: logsService
+  logs: logsService,
+  marketplaceNotifications: marketplaceNotificationsService
 };
 
 export type AppServices = typeof services;

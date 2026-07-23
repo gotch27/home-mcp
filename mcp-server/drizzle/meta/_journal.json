@@ -50,6 +50,13 @@
       "when": 1778956800000,
       "tag": "0006_deterministic_todo_assignees",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784838441250,
+      "tag": "0007_yellow_alex_power",
+      "breakpoints": true
     }
   ]
 }
