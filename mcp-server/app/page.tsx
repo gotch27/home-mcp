@@ -99,10 +99,10 @@ export default async function HomePage() {
         </div>
 
         <div className="editorial-setup-grid">
-          <ConnectionCard client="Claude" number="01">
+          <ConnectionCard client="Claude" logoSrc="/claude-logo.webp" number="01">
             Open Claude&apos;s connector settings, choose to add a custom MCP server, and paste the HomeSpace URL. Keep OAuth enabled, then sign in when prompted.
           </ConnectionCard>
-          <ConnectionCard client="ChatGPT" number="02">
+          <ConnectionCard client="ChatGPT" logoSrc="/chatgpt-logo.png" number="02">
             Open ChatGPT&apos;s connector settings, add a custom MCP server with the HomeSpace URL, and enable OAuth. Sign in to authorize your shopping spaces.
           </ConnectionCard>
           <aside className="editorial-marketplace-card">
@@ -119,12 +119,14 @@ export default async function HomePage() {
   );
 }
 
-function ConnectionCard({ children, client, number }: { children: ReactNode; client: string; number: string }) {
+function ConnectionCard({ children, client, logoSrc, number }: { children: ReactNode; client: string; logoSrc: string; number: string }) {
   return (
     <article className="editorial-connection-card">
       <div className="editorial-connection-heading">
         <span>{number}</span>
-        <span className="editorial-client-mark" aria-hidden="true">{client.slice(0, 1)}</span>
+        <span className="editorial-client-mark" aria-hidden="true">
+          <Image src={logoSrc} alt="" width={32} height={32} />
+        </span>
       </div>
       <h3>Add HomeSpace to {client}</h3>
       <p>{children}</p>
