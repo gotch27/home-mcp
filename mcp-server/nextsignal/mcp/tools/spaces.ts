@@ -13,7 +13,7 @@ export const spaceTools: NextSignalMcpTool[] = [
         "space_list",
         {
           title: "List Spaces",
-          description: "Lists home spaces the authenticated user has joined. Use a returned id as spaceId for shopping, todo, and member tools.",
+          description: "Lists home spaces the authenticated user has joined. Use a returned id as spaceId for shopping and member tools.",
           inputSchema: {}
         },
         async (input, extra) => toMcpToolResult(await dispatchMcpTool<SpacesListInput>(app, "spaces.list", input, extra))
@@ -26,7 +26,7 @@ export const spaceTools: NextSignalMcpTool[] = [
         "space_list_members",
         {
           title: "List Space Members",
-          description: "Lists members in the requested home space. Use the returned userId as todo_add assigneeUserId.",
+          description: "Lists members in the requested home space.",
           inputSchema: {
             spaceId: spaceIdSchema
           }

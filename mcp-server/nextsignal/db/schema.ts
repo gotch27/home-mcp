@@ -93,3 +93,15 @@ export const nextsignalLogs = pgTable(
     index("nextsignal_logs_correlation_id_idx").on(table.correlationId)
   ]
 );
+
+export const marketplaceNotificationSignups = pgTable(
+  "marketplace_notification_signups",
+  {
+    id: text("id").primaryKey(),
+    email: text("email").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => [
+    uniqueIndex("marketplace_notification_signups_email_idx").on(table.email)
+  ]
+);

@@ -43,9 +43,9 @@ export function McpPhotoCarousel() {
   }
 
   return (
-    <section className="editorial-carousel" aria-roledescription="carousel" aria-label="Home MCP in action">
+    <section className="editorial-carousel" aria-roledescription="carousel" aria-label="HomeSpace shopping lists in action">
       <div className="editorial-carousel-top">
-        <span>MCP in action</span>
+        <span>Shopping lists in action</span>
         <span>{String(activeSlide + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}</span>
       </div>
 

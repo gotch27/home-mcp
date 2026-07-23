@@ -1,5 +1,6 @@
 import { healthApi } from "@/nextsignal/processes/api/health";
 import { pruneLogsApi } from "@/nextsignal/processes/api/logs/prune";
+import { marketplaceNotificationSubscribeApi } from "@/nextsignal/processes/api/marketplace-notifications/subscribe";
 import { shoppingListItemsApi } from "@/nextsignal/processes/api/shopping/list-items";
 import { shoppingPreviewAddApi } from "@/nextsignal/processes/api/shopping/preview-add";
 import { spacesListMembersApi } from "@/nextsignal/processes/api/spaces/list-members";
@@ -26,6 +27,7 @@ import { ensureCurrentUser } from "@/nextsignal/processes/business/users/ensure-
 export const processes = [
   healthApi,
   pruneLogsApi,
+  marketplaceNotificationSubscribeApi,
   shoppingListItemsApi,
   shoppingPreviewAddApi,
   spacesListMembersApi,
